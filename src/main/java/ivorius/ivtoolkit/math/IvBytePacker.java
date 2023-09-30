@@ -44,7 +44,6 @@ public class IvBytePacker {
             currentSavedBits += bitLength;
 
             while (currentSavedBits >= 8) {
-                // Écrivez un byte complet dans le buffer
                 buffer.put((byte) (currentVal >>> (currentSavedBits - 8)));
                 currentSavedBits -= 8;
 
