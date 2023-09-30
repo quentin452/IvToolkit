@@ -10,7 +10,7 @@ To see all listed changes : https://github.com/quentin452/IvToolkit/wiki
 
 [*Github*](https://github.com/quentin452/IvToolkit)
 
-//[*Curseforge*](https://legacy.curseforge.com/minecraft/mc-mods/recurrent-complex-arcana-rpg-continuation-edition)
+[*Curseforge*](https://legacy.curseforge.com/minecraft/mc-mods/ivtoolkit-arcana-rpg-continuation-edition)
 
 # Discord
 
