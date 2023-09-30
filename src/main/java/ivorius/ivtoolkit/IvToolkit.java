@@ -13,9 +13,12 @@
 
 package ivorius.ivtoolkit;
 
+import cpw.mods.fml.common.Mod;
+
 /**
  * Created by lukas on 21.03.16.
  */
+@Mod(modid = IvToolkit.MODID, version = IvToolkit.VERSION, name = IvToolkit.NAME)
 public class IvToolkit {
 
     public static final String NAME = "IvToolkit";
