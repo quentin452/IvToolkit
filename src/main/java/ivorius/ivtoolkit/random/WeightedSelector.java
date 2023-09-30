@@ -17,11 +17,10 @@
 package ivorius.ivtoolkit.random;
 
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class WeightedSelector
 {
@@ -45,17 +44,6 @@ public class WeightedSelector
         return items.stream().anyMatch(item -> weightFunction.applyAsDouble(item) > 0);
     }
 
-    public static <T> T selectWeightless(Random rand, Collection<T> items, int counted)
-    {
-        counted = rand.nextInt(counted);
-        for (Iterator<T> iterator = items.iterator(); true; )
-        {
-            T item = iterator.next();
-            if (counted-- == 0 || !iterator.hasNext())
-                return item;
-        }
-    }
-
     public static <T extends Item> T selectItem(Random rand, Collection<T> items)
     {
         return selectItem(rand, items, totalWeight(items));
@@ -77,20 +65,20 @@ public class WeightedSelector
             throw new IndexOutOfBoundsException();
 
         double random = rand.nextDouble() * totalWeight;
-        int counted = 0;
-        for (Iterator<T> iterator = items.iterator(); iterator.hasNext(); counted++)
+        T last = null;
+        for (Iterator<T> iterator = items.iterator(); iterator.hasNext(); )
         {
-            T t = iterator.next();
-            random -= t.getWeight();
+            last = iterator.next();
+            random -= last.getWeight();
             if (random <= 0.0)
             {
                 if (remove)
                     iterator.remove();
-                return t;
+                return last;
             }
         }
 
-        return selectWeightless(rand, items, counted);
+        return last;
     }
 
     public static <T> T select(Random rand, Collection<T> items, final ToDoubleFunction<T> weightFunction)
@@ -114,37 +102,41 @@ public class WeightedSelector
             throw new IndexOutOfBoundsException();
 
         double random = rand.nextDouble() * totalWeight;
-        int counted = 0;
-        for (Iterator<T> iterator = items.iterator(); iterator.hasNext(); counted++)
+        T last = null;
+        for (Iterator<T> iterator = items.iterator(); iterator.hasNext(); )
         {
-            T t = iterator.next();
-            random -= weightFunction.applyAsDouble(t);
+            last = iterator.next();
+            random -= weightFunction.applyAsDouble(last);
             if (random <= 0.0)
             {
                 if (remove)
                     iterator.remove();
-                return t;
+                return last;
             }
         }
 
-        return selectWeightless(rand, items, counted);
+        return last;
     }
 
+    @Deprecated
     public static <T> T select(Random rand, Collection<SimpleItem<T>> items)
     {
         return selectItem(rand, items).getItem();
     }
 
+    @Deprecated
     public static <T> T select(Random rand, Collection<SimpleItem<T>> items, double totalWeight)
     {
         return selectItem(rand, items, totalWeight).getItem();
     }
 
+    @Deprecated
     public static <T> T select(Random rand, Collection<SimpleItem<T>> items, boolean remove)
     {
         return selectItem(rand, items, remove).getItem();
     }
 
+    @Deprecated
     public static <T> T select(Random rand, Collection<SimpleItem<T>> items, double totalWeight, boolean remove)
     {
         return selectItem(rand, items, totalWeight, remove).getItem();
@@ -155,6 +147,7 @@ public class WeightedSelector
         double getWeight();
     }
 
+    @Deprecated
     public static class SimpleItem<T> implements Item, Comparable<Item>
     {
         protected final double weight;
@@ -171,11 +164,6 @@ public class WeightedSelector
             return new SimpleItem<>(weight, item);
         }
 
-        public static <T> List<SimpleItem<T>> apply(Stream<T> items, final ToDoubleFunction<T> weightFunction)
-        {
-            return items.map(input -> new SimpleItem<>(weightFunction.applyAsDouble(input), input)).collect(Collectors.toList());
-        }
-
         public static <T> Collection<SimpleItem<T>> apply(Collection<T> items, final ToDoubleFunction<T> weightFunction)
         {
             return Collections2.transform(items, item -> new SimpleItem<>(weightFunction.applyAsDouble(item), item));
@@ -183,7 +171,7 @@ public class WeightedSelector
 
         public static <T> List<SimpleItem<T>> apply(List<T> items, final ToDoubleFunction<T> weightFunction)
         {
-            return apply(items.stream(), weightFunction);
+            return Lists.transform(items, input -> new SimpleItem<>(weightFunction.applyAsDouble(input), input));
         }
 
         public T getItem()

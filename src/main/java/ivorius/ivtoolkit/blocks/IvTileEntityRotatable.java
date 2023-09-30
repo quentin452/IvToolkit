@@ -17,201 +17,84 @@
 package ivorius.ivtoolkit.blocks;
 
 
-import ivorius.ivtoolkit.tools.EnumFacingHelper;
-import net.minecraft.client.renderer.Vector3f;
-import net.minecraft.entity.Entity;
+import ivorius.ivtoolkit.math.IvMathHelper;
+import ivorius.ivtoolkit.raytracing.IvRaytraceableAxisAlignedBox;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.Vec3;
+import org.lwjgl.util.vector.Vector3f;
 
 public class IvTileEntityRotatable extends TileEntity
 {
-    public EnumFacing facing;
+    public int direction;
 
-    public IvTileEntityRotatable(TileEntityType<?> tileEntityTypeIn)
+    @Override
+    public void readFromNBT(NBTTagCompound par1nbtTagCompound)
     {
-        super(tileEntityTypeIn);
+        super.readFromNBT(par1nbtTagCompound);
+
+        direction = par1nbtTagCompound.getInteger("direction");
     }
 
     @Override
-    public void read(NBTTagCompound tagCompound)
+    public void writeToNBT(NBTTagCompound par1nbtTagCompound)
     {
-        super.read(tagCompound);
+        super.writeToNBT(par1nbtTagCompound);
 
-        if (tagCompound.hasKey("direction")) // Legacy
-        {
-            switch (tagCompound.getInt("direction")) {
-                case 0:
-                    facing = EnumFacing.SOUTH;
-                case 1:
-                    facing = EnumFacing.WEST;
-                case 2:
-                    facing = EnumFacing.NORTH;
-                case 3:
-                    facing = EnumFacing.EAST;
-                default:
-                    facing = EnumFacing.SOUTH;
-            }
-        }
-        else
-            facing = EnumFacingHelper.byName(tagCompound.getString("facing"), EnumFacing.SOUTH);
+        par1nbtTagCompound.setInteger("direction", direction);
     }
 
     @Override
-    public NBTTagCompound write(NBTTagCompound tagCompound)
-    {
-        super.write(tagCompound);
-
-        tagCompound.setString("facing", facing.getName());
-
-        return tagCompound;
-    }
-
-    @Nullable
-    @Override
-    public SPacketUpdateTileEntity getUpdatePacket()
+    public Packet getDescriptionPacket()
     {
         return IvTileEntityHelper.getStandardDescriptionPacket(this);
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt)
     {
-        read(pkt.getNbtCompound());
+        readFromNBT(pkt.func_148857_g());
+    }
+
+    public IvRaytraceableAxisAlignedBox getInterpolatedRotatedBox(Object userInfo, double x, double y, double z, double width, double height, double depth, double x1, double y1, double z1, double width1, double height1, double depth1, float fraction)
+    {
+        double xI = IvMathHelper.mix(x, x1, fraction);
+        double yI = IvMathHelper.mix(y, y1, fraction);
+        double zI = IvMathHelper.mix(z, z1, fraction);
+
+        double wI = IvMathHelper.mix(width, width1, fraction);
+        double hI = IvMathHelper.mix(height, height1, fraction);
+        double dI = IvMathHelper.mix(depth, depth1, fraction);
+
+        return getRotatedBox(userInfo, xI, yI, zI, wI, hI, dI);
+    }
+
+    public IvRaytraceableAxisAlignedBox getRotatedBox(Object userInfo, double x, double y, double z, double width, double height, double depth)
+    {
+        return IvMultiBlockHelper.getRotatedBox(userInfo, x, y, z, width, height, depth, getDirection(), new double[]{xCoord + 0.5, yCoord + 0.5, zCoord + 0.5});
     }
 
     public AxisAlignedBB getRotatedBB(double x, double y, double z, double width, double height, double depth)
     {
-        return getRotatedBB(x, y, z, width, height, depth, getFacing(), new double[]{getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5});
+        return IvMultiBlockHelper.getRotatedBB(x, y, z, width, height, depth, getDirection(), new double[]{xCoord + 0.5, yCoord + 0.5, zCoord + 0.5});
     }
 
     public Vector3f getRotatedVector(Vector3f vector3f)
     {
-        return getRotatedVector(vector3f, getFacing());
+        return IvMultiBlockHelper.getRotatedVector(vector3f, getDirection());
     }
 
-    public Vec3d getRotatedVector(Vec3d vec3)
+    public Vec3 getRotatedVector(Vec3 vec3)
     {
-        return getRotatedVector(vec3, getFacing());
+        return IvMultiBlockHelper.getRotatedVector(vec3, getDirection());
     }
 
-    public EnumFacing getFacing()
+    public int getDirection()
     {
-        return facing;
-    }
-
-    public static List<BlockPos> getRotatedPositions(List<BlockPos> positions, EnumFacing facing)
-    {
-        ArrayList<BlockPos> returnList = new ArrayList<>(positions.size());
-
-        for (BlockPos position : positions) {
-            switch (facing) {
-                case NORTH:
-                case SOUTH:
-                    returnList.add(position);
-                    break;
-                case WEST:
-                case EAST:
-                    returnList.add(new BlockPos(position.getZ(), position.getY(), position.getX()));
-                    break;
-            }
-        }
-
-        return returnList;
-    }
-
-    public static AxisAlignedBB getRotatedBB(double x, double y, double z, double width, double height, double depth, EnumFacing direction, double[] centerCoords)
-    {
-        AxisAlignedBB box = null;
-
-        switch (direction) {
-            case SOUTH:
-                box = getBBWithLengths(centerCoords[0] + x, centerCoords[1] + y, centerCoords[2] + z, width, height, depth);
-                break;
-            case WEST:
-                box = getBBWithLengths(centerCoords[0] - z - depth, centerCoords[1] + y, centerCoords[2] + x, depth, height, width);
-                break;
-            case NORTH:
-                box = getBBWithLengths(centerCoords[0] - x - width, centerCoords[1] + y, centerCoords[2] - z - depth, width, height, depth);
-                break;
-            case EAST:
-                box = getBBWithLengths(centerCoords[0] + z, centerCoords[1] + y, centerCoords[2] - x - width, depth, height, width);
-                break;
-        }
-
-        return box;
-    }
-
-    public static Vector3f getRotatedVector(Vector3f vector3f, EnumFacing facing)
-    {
-        switch (facing) {
-            case SOUTH:
-                return new Vector3f(vector3f.getX(), vector3f.getY(), vector3f.getZ());
-            case WEST:
-                return new Vector3f(-vector3f.getZ(), vector3f.getY(), vector3f.getX());
-            case NORTH:
-                return new Vector3f(-vector3f.getX(), vector3f.getY(), -vector3f.getZ());
-            case EAST:
-                return new Vector3f(vector3f.getZ(), vector3f.getY(), -vector3f.getX());
-        }
-
-        return null;
-    }
-
-    public static Vec3d getRotatedVector(Vec3d vec3, EnumFacing facing)
-    {
-        switch (facing) {
-            case SOUTH:
-                return new Vec3d(vec3.x, vec3.y, vec3.z);
-            case WEST:
-                return new Vec3d(-vec3.z, vec3.y, vec3.x);
-            case NORTH:
-                return new Vec3d(-vec3.x, vec3.y, -vec3.z);
-            case EAST:
-                return new Vec3d(vec3.z, vec3.y, -vec3.x);
-        }
-
-        return null;
-    }
-
-    public static AxisAlignedBB getBBWithLengths(double x, double y, double z, double width, double height, double depth)
-    {
-        return new AxisAlignedBB(x, y, z, x + width, y + height, z + depth);
-    }
-
-    public static EnumFacing getRotation(Entity entity)
-    {
-        return entity.getHorizontalFacing();
-    }
-
-    public static List<BlockPos> getRotatedPositions(EnumFacing facing, int width, int height, int length)
-    {
-        boolean affectsX = (facing == EnumFacing.SOUTH) || (facing == EnumFacing.NORTH);
-        return getPositions(affectsX ? width : length, height, affectsX ? length : width);
-    }
-
-    public static List<BlockPos> getPositions(int width, int height, int length)
-    {
-        ArrayList<BlockPos> positions = new ArrayList<>();
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                for (int z = 0; z < length; z++) {
-                    positions.add(new BlockPos(x, y, z));
-                }
-            }
-        }
-
-        return positions;
+        return direction;
     }
 }

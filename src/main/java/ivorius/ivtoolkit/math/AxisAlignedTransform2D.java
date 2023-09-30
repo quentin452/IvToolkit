@@ -16,9 +16,11 @@
 
 package ivorius.ivtoolkit.math;
 
-import ivorius.ivtoolkit.blocks.Directions;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
+import ivorius.ivtoolkit.blocks.BlockCoord;
+import net.minecraft.block.Block;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.world.World;
+import net.minecraftforge.common.util.ForgeDirection;
 
 /**
  * Created by lukas on 08.06.14.
@@ -41,9 +43,9 @@ public class AxisAlignedTransform2D
     private final boolean mirrorX;
 
     @Deprecated
-    public AxisAlignedTransform2D(int rotationClockwise, boolean mirrorX)
+    public AxisAlignedTransform2D(int rotation, boolean mirrorX)
     {
-        this.rotation = ((rotationClockwise % 4) + 4) % 4;
+        this.rotation = ((rotation % 4) + 4) % 4;
         this.mirrorX = mirrorX;
     }
 
@@ -135,74 +137,42 @@ public class AxisAlignedTransform2D
         if (direction < 0 || direction > 3)
             throw new IllegalArgumentException();
 
-        boolean mirrorApplies = mirrorX && (rotation % 2) == 1; // Mirror is applied first, so it has to be left or right to apply
-        return (direction + rotation + (mirrorApplies ? 2 : 0)) % 4;
+        return (direction + rotation) % 4;
     }
 
-    public EnumFacing apply(EnumFacing facing)
+    public BlockCoord apply(BlockCoord position, int[] size)
     {
-        if (facing.getAxis() == EnumFacing.Axis.Y)
-            return facing;
-
-        if (mirrorX && facing.getAxis() == EnumFacing.Axis.X)
-            facing = facing.getOpposite();
-
-        return Directions.HORIZONTAL[(facing.getHorizontalIndex() + rotation) % Directions.HORIZONTAL.length];
-    }
-
-    public BlockPos.MutableBlockPos applyOn(BlockPos.MutableBlockPos position, int[] size)
-    {
-        return applyOn(position, position, size, 1);
-    }
-
-    public BlockPos.MutableBlockPos applyOn(BlockPos.MutableBlockPos position, int[] size, int centerCorrection)
-    {
-        return applyOn(position, position, size, centerCorrection);
-    }
-
-    public BlockPos.MutableBlockPos applyOn(BlockPos position, BlockPos.MutableBlockPos onPosition, int[] size)
-    {
-        return applyOn(position, onPosition, size, 1);
-    }
-
-    public BlockPos.MutableBlockPos applyOn(BlockPos position, BlockPos.MutableBlockPos onPosition, int[] size, int centerCorrection)
-    {
-        int positionX = mirrorX ? size[0] - centerCorrection - position.getX() : position.getX();
+        int positionX = mirrorX ? size[0] - 1 - position.x : position.x;
 
         switch (rotation)
         {
             case 0:
-                return onPosition.setPos(positionX, position.getY(), position.getZ());
+                return new BlockCoord(positionX, position.y, position.z);
             case 1:
-                return onPosition.setPos(size[2] - centerCorrection - position.getZ(), position.getY(), positionX);
+                return new BlockCoord(size[2] - 1 - position.z, position.y, positionX);
             case 2:
-                return onPosition.setPos(size[0] - centerCorrection - positionX, position.getY(), size[2] - centerCorrection - position.getZ());
+                return new BlockCoord(size[0] - 1 - positionX, position.y, size[2] - 1 - position.z);
             case 3:
-                return onPosition.setPos(position.getZ(), position.getY(), size[0] - centerCorrection - positionX);
+                return new BlockCoord(position.z, position.y, size[0] - 1 - positionX);
             default:
                 throw new InternalError();
         }
     }
 
-    public BlockPos apply(BlockPos position, int[] size)
+    public ChunkCoordinates apply(ChunkCoordinates position, int[] size)
     {
-        return apply(position, size, 1);
-    }
-
-    public BlockPos apply(BlockPos position, int[] size, int centerCorrection)
-    {
-        int positionX = mirrorX ? size[0] - centerCorrection - position.getX() : position.getX();
+        int positionX = mirrorX ? size[0] - 1 - position.posX : position.posX;
 
         switch (rotation)
         {
             case 0:
-                return new BlockPos(positionX, position.getY(), position.getZ());
+                return new ChunkCoordinates(positionX, position.posY, position.posZ);
             case 1:
-                return new BlockPos(size[2] - centerCorrection - position.getZ(), position.getY(), positionX);
+                return new ChunkCoordinates(size[2] - 1 - position.posZ, position.posY, positionX);
             case 2:
-                return new BlockPos(size[0] - centerCorrection - positionX, position.getY(), size[2] - centerCorrection - position.getZ());
+                return new ChunkCoordinates(size[0] - 1 - positionX, position.posY, size[2] - 1 - position.posZ);
             case 3:
-                return new BlockPos(position.getZ(), position.getY(), size[0] - centerCorrection - positionX);
+                return new ChunkCoordinates(position.posZ, position.posY, size[0] - 1 - positionX);
             default:
                 throw new InternalError();
         }
@@ -210,153 +180,65 @@ public class AxisAlignedTransform2D
 
     public double[] apply(double[] position, int[] size)
     {
-        return applyOn(position, new double[position.length], size, 0);
-    }
-
-    public double[] applyOn(double[] position, int[] size)
-    {
-        return applyOn(position, position, size, 0);
-    }
-
-    public double[] applyOn(double[] position, int[] size, int centerCorrection)
-    {
-        return applyOn(position, position, size, centerCorrection);
-    }
-
-    public double[] applyOn(double[] position, double[] on, int[] size, int centerCorrection)
-    {
-        double x, z;
-
-        double positionX = mirrorX ? size[0] - centerCorrection - position[0] : position[0];
+        double positionX = mirrorX ? size[0] - 1 - position[0] : position[0];
 
         switch (rotation)
         {
             case 0:
-                x = positionX;
-                z = position[2];
-                break;
+                return new double[]{positionX, position[1], position[2]};
             case 1:
-                x = size[2] - centerCorrection - position[2];
-                z = positionX;
-                break;
+                return new double[]{size[2] - 1 - position[2], position[1], positionX};
             case 2:
-                x = size[0] - centerCorrection - positionX;
-                z = size[2] - centerCorrection - position[2];
-                break;
+                return new double[]{size[0] - 1 - positionX, position[1], size[2] - 1 - position[2]};
             case 3:
-                x = position[2];
-                z = size[0] - centerCorrection - positionX;
-                break;
+                return new double[]{position[2], position[1], size[0] - 1 - positionX};
             default:
                 throw new InternalError();
         }
-
-        on[0] = x;
-        on[1] = position[1];
-        on[2] = z;
-
-        return on;
     }
 
     public float[] apply(float[] position, int[] size)
     {
-        return applyOn(position, new float[position.length], size, 0);
-    }
-
-    public float[] applyOn(float[] position, int[] size)
-    {
-        return applyOn(position, position, size, 0);
-    }
-
-    public float[] applyOn(float[] position, int[] size, int centerCorrection)
-    {
-        return applyOn(position, position, size, centerCorrection);
-    }
-
-    public float[] applyOn(float[] position, float[] on, int[] size, int centerCorrection)
-    {
-        float x, z;
-
-        float positionX = mirrorX ? size[0] - centerCorrection - position[0] : position[0];
+        float positionX = mirrorX ? size[0] - 1 - position[0] : position[0];
 
         switch (rotation)
         {
             case 0:
-                x = positionX;
-                z = position[2];
-                break;
+                return new float[]{positionX, position[1], position[2]};
             case 1:
-                x = size[2] - centerCorrection - position[2];
-                z = positionX;
-                break;
+                return new float[]{size[2] - 1 - position[2], position[1], positionX};
             case 2:
-                x = size[0] - centerCorrection - positionX;
-                z = size[2] - centerCorrection - position[2];
-                break;
+                return new float[]{size[0] - 1 - positionX, position[1], size[2] - 1 - position[2]};
             case 3:
-                x = position[2];
-                z = size[0] - centerCorrection - positionX;
-                break;
+                return new float[]{position[2], position[1], size[0] - 1 - positionX};
             default:
                 throw new InternalError();
         }
-
-        on[0] = x;
-        on[1] = position[1];
-        on[2] = z;
-
-        return on;
     }
 
-    @Deprecated
     public int[] apply(int[] position, int[] size)
     {
-        return applyOn(position, new int[position.length], size, 1);
-    }
-
-    public int[] applyOn(int[] position, int[] size)
-    {
-        return applyOn(position, position, size, 0);
-    }
-
-    public int[] applyOn(int[] position, int[] size, int centerCorrection)
-    {
-        return applyOn(position, position, size, centerCorrection);
-    }
-
-    public int[] applyOn(int[] position, int[] on, int[] size, int centerCorrection)
-    {
-        int x, z;
-
-        int positionX = mirrorX ? size[0] - centerCorrection - position[0] : position[0];
+        int positionX = mirrorX ? size[0] - 1 - position[0] : position[0];
 
         switch (rotation)
         {
             case 0:
-                x = positionX;
-                z = position[2];
-                break;
+                return new int[]{positionX, position[1], position[2]};
             case 1:
-                x = size[2] - centerCorrection - position[2];
-                z = positionX;
-                break;
+                return new int[]{size[2] - 1 - position[2], position[1], positionX};
             case 2:
-                x = size[0] - centerCorrection - positionX;
-                z = size[2] - centerCorrection - position[2];
-                break;
+                return new int[]{size[0] - 1 - positionX, position[1], size[2] - 1 - position[2]};
             case 3:
-                x = position[2];
-                z = size[0] - centerCorrection - positionX;
-                break;
+                return new int[]{position[2], position[1], size[0] - 1 - positionX};
             default:
                 throw new InternalError();
         }
+    }
 
-        on[0] = x;
-        on[1] = position[1];
-        on[2] = z;
-
-        return on;
+    public void rotateBlock(World world, BlockCoord coord, Block block)
+    {
+        for (int i = 0; i < rotation; i++)
+            block.rotateBlock(world, coord.x, coord.y, coord.z, ForgeDirection.UP);
     }
 
     @Override

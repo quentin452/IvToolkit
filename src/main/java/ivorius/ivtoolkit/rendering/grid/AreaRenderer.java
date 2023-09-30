@@ -16,20 +16,17 @@
 
 package ivorius.ivtoolkit.rendering.grid;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import ivorius.ivtoolkit.blocks.BlockArea;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
+import ivorius.ivtoolkit.blocks.BlockCoord;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
 
 /**
  * Created by lukas on 09.02.15.
  */
-@OnlyIn(Dist.CLIENT)
+@SideOnly(Side.CLIENT)
 public class AreaRenderer
 {
     public static void renderAreaLined(BlockArea area, float sizeP)
@@ -42,98 +39,98 @@ public class AreaRenderer
         drawCuboid(area.getLowerCorner(), area.getHigherCorner().add(1, 1, 1), lined, insides, sizeP);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private static void drawCuboid(BlockPos min, BlockPos max, boolean lined, boolean insides, float sizeP)
+    @SideOnly(Side.CLIENT)
+    private static void drawCuboid(BlockCoord min, BlockCoord max, boolean lined, boolean insides, float sizeP)
     {
-        float width2 = ((float) max.getX() - (float) min.getX()) * 0.5f;
-        float height2 = ((float) max.getY() - (float) min.getY()) * 0.5f;
-        float length2 = ((float) max.getZ() - (float) min.getZ()) * 0.5f;
+        float width2 = ((float) max.x - (float) min.x) * 0.5f;
+        float height2 = ((float) max.y - (float) min.y) * 0.5f;
+        float length2 = ((float) max.z - (float) min.z) * 0.5f;
 
-        double centerX = min.getX() + width2;
-        double centerY = min.getY() + height2;
-        double centerZ = min.getZ() + length2;
+        double centerX = min.x + width2;
+        double centerY = min.y + height2;
+        double centerZ = min.z + length2;
 
         int sizeCE = insides ? -1 : 1;
 
-        GlStateManager.pushMatrix();
-        GlStateManager.translated(centerX, centerY, centerZ);
+        GL11.glPushMatrix();
+        GL11.glTranslated(centerX, centerY, centerZ);
         if (lined)
         {
-            GlStateManager.disableTexture2D();
-            drawLineCuboid(Tessellator.getInstance().getBuffer(), width2 + sizeP, height2 + sizeP, length2 + sizeP, 1);
-            GlStateManager.enableTexture2D();
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            drawLineCuboid(Tessellator.instance, width2 + sizeP, height2 + sizeP, length2 + sizeP, 1);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
         }
         else
-            drawCuboid(Tessellator.getInstance().getBuffer(), width2 * sizeCE + sizeP, height2 * sizeCE + sizeP, length2 * sizeCE + sizeP, 1);
-        GlStateManager.popMatrix();
+            drawCuboid(Tessellator.instance, width2 * sizeCE + sizeP, height2 * sizeCE + sizeP, length2 * sizeCE + sizeP, 1);
+        GL11.glPopMatrix();
     }
 
-    public static void drawCuboid(BufferBuilder renderer, float sizeX, float sizeY, float sizeZ, float in)
+    public static void drawCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in)
     {
-        renderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        tessellator.startDrawingQuads();
 
-        renderer.pos(-sizeX * in, -sizeY * in, -sizeZ).tex(0, 0).endVertex();
-        renderer.pos(-sizeX * in, sizeY * in, -sizeZ).tex(0, 1).endVertex();
-        renderer.pos(sizeX * in, sizeY * in, -sizeZ).tex(1, 1).endVertex();
-        renderer.pos(sizeX * in, -sizeY * in, -sizeZ).tex(1, 0).endVertex();
+        tessellator.addVertexWithUV(-sizeX * in, -sizeY * in, -sizeZ, 0, 0);
+        tessellator.addVertexWithUV(-sizeX * in, sizeY * in, -sizeZ, 0, 1);
+        tessellator.addVertexWithUV(sizeX * in, sizeY * in, -sizeZ, 1, 1);
+        tessellator.addVertexWithUV(sizeX * in, -sizeY * in, -sizeZ, 1, 0);
 
-        renderer.pos(-sizeX * in, -sizeY * in, sizeZ).tex(0, 0).endVertex();
-        renderer.pos(sizeX * in, -sizeY * in, sizeZ).tex(1, 0).endVertex();
-        renderer.pos(sizeX * in, sizeY * in, sizeZ).tex(1, 1).endVertex();
-        renderer.pos(-sizeX * in, sizeY * in, sizeZ).tex(0, 1).endVertex();
+        tessellator.addVertexWithUV(-sizeX * in, -sizeY * in, sizeZ, 0, 0);
+        tessellator.addVertexWithUV(sizeX * in, -sizeY * in, sizeZ, 1, 0);
+        tessellator.addVertexWithUV(sizeX * in, sizeY * in, sizeZ, 1, 1);
+        tessellator.addVertexWithUV(-sizeX * in, sizeY * in, sizeZ, 0, 1);
 
-        renderer.pos(-sizeX, -sizeY * in, -sizeZ * in).tex(0, 0).endVertex();
-        renderer.pos(-sizeX, -sizeY * in, sizeZ * in).tex(0, 1).endVertex();
-        renderer.pos(-sizeX, sizeY * in, sizeZ * in).tex(1, 1).endVertex();
-        renderer.pos(-sizeX, sizeY * in, -sizeZ * in).tex(1, 0).endVertex();
+        tessellator.addVertexWithUV(-sizeX, -sizeY * in, -sizeZ * in, 0, 0);
+        tessellator.addVertexWithUV(-sizeX, -sizeY * in, sizeZ * in, 0, 1);
+        tessellator.addVertexWithUV(-sizeX, sizeY * in, sizeZ * in, 1, 1);
+        tessellator.addVertexWithUV(-sizeX, sizeY * in, -sizeZ * in, 1, 0);
 
-        renderer.pos(sizeX, -sizeY * in, -sizeZ * in).tex(0, 0).endVertex();
-        renderer.pos(sizeX, sizeY * in, -sizeZ * in).tex(0, 1).endVertex();
-        renderer.pos(sizeX, sizeY * in, sizeZ * in).tex(1, 1).endVertex();
-        renderer.pos(sizeX, -sizeY * in, sizeZ * in).tex(1, 0).endVertex();
+        tessellator.addVertexWithUV(sizeX, -sizeY * in, -sizeZ * in, 0, 0);
+        tessellator.addVertexWithUV(sizeX, sizeY * in, -sizeZ * in, 0, 1);
+        tessellator.addVertexWithUV(sizeX, sizeY * in, sizeZ * in, 1, 1);
+        tessellator.addVertexWithUV(sizeX, -sizeY * in, sizeZ * in, 1, 0);
 
-        renderer.pos(-sizeX * in, sizeY, -sizeZ * in).tex(0, 0).endVertex();
-        renderer.pos(-sizeX * in, sizeY, sizeZ * in).tex(0, 1).endVertex();
-        renderer.pos(sizeX * in, sizeY, sizeZ * in).tex(1, 1).endVertex();
-        renderer.pos(sizeX * in, sizeY, -sizeZ * in).tex(1, 0).endVertex();
+        tessellator.addVertexWithUV(-sizeX * in, sizeY, -sizeZ * in, 0, 0);
+        tessellator.addVertexWithUV(-sizeX * in, sizeY, sizeZ * in, 0, 1);
+        tessellator.addVertexWithUV(sizeX * in, sizeY, sizeZ * in, 1, 1);
+        tessellator.addVertexWithUV(sizeX * in, sizeY, -sizeZ * in, 1, 0);
 
-        renderer.pos(-sizeX * in, -sizeY, -sizeZ * in).tex(0, 0).endVertex();
-        renderer.pos(sizeX * in, -sizeY, -sizeZ * in).tex(1, 0).endVertex();
-        renderer.pos(sizeX * in, -sizeY, sizeZ * in).tex(1, 1).endVertex();
-        renderer.pos(-sizeX * in, -sizeY, sizeZ * in).tex(0, 1).endVertex();
+        tessellator.addVertexWithUV(-sizeX * in, -sizeY, -sizeZ * in, 0, 0);
+        tessellator.addVertexWithUV(sizeX * in, -sizeY, -sizeZ * in, 1, 0);
+        tessellator.addVertexWithUV(sizeX * in, -sizeY, sizeZ * in, 1, 1);
+        tessellator.addVertexWithUV(-sizeX * in, -sizeY, sizeZ * in, 0, 1);
 
-        Tessellator.getInstance().draw();
+        tessellator.draw();
     }
 
-    public static void drawLineCuboid(BufferBuilder renderer, float sizeX, float sizeY, float sizeZ, float in)
+    public static void drawLineCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in)
     {
-        renderer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION);
+        tessellator.startDrawing(GL11.GL_LINE_STRIP);
 
-        renderer.pos(-sizeX * in, -sizeY * in, -sizeZ).endVertex();
-        renderer.pos(-sizeX * in, sizeY * in, -sizeZ).endVertex();
-        renderer.pos(sizeX * in, sizeY * in, -sizeZ).endVertex();
-        renderer.pos(sizeX * in, -sizeY * in, -sizeZ).endVertex();
-        renderer.pos(-sizeX * in, -sizeY * in, -sizeZ).endVertex();
+        tessellator.addVertex(-sizeX * in, -sizeY * in, -sizeZ);
+        tessellator.addVertex(-sizeX * in, sizeY * in, -sizeZ);
+        tessellator.addVertex(sizeX * in, sizeY * in, -sizeZ);
+        tessellator.addVertex(sizeX * in, -sizeY * in, -sizeZ);
+        tessellator.addVertex(-sizeX * in, -sizeY * in, -sizeZ);
 
-        renderer.pos(-sizeX * in, -sizeY * in, sizeZ).endVertex();
-        renderer.pos(-sizeX * in, sizeY * in, sizeZ).endVertex();
-        renderer.pos(sizeX * in, sizeY * in, sizeZ).endVertex();
-        renderer.pos(sizeX * in, -sizeY * in, sizeZ).endVertex();
-        renderer.pos(-sizeX * in, -sizeY * in, sizeZ).endVertex();
+        tessellator.addVertex(-sizeX * in, -sizeY * in, sizeZ);
+        tessellator.addVertex(-sizeX * in, sizeY * in, sizeZ);
+        tessellator.addVertex(sizeX * in, sizeY * in, sizeZ);
+        tessellator.addVertex(sizeX * in, -sizeY * in, sizeZ);
+        tessellator.addVertex(-sizeX * in, -sizeY * in, sizeZ);
 
-        Tessellator.getInstance().draw();
+        tessellator.draw();
 
-        renderer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION);
+        tessellator.startDrawing(GL11.GL_LINES);
 
-        renderer.pos(-sizeX * in, sizeY * in, -sizeZ).endVertex();
-        renderer.pos(-sizeX * in, sizeY * in, sizeZ).endVertex();
+        tessellator.addVertex(-sizeX * in, sizeY * in, -sizeZ);
+        tessellator.addVertex(-sizeX * in, sizeY * in, sizeZ);
 
-        renderer.pos(sizeX * in, sizeY * in, -sizeZ).endVertex();
-        renderer.pos(sizeX * in, sizeY * in, sizeZ).endVertex();
+        tessellator.addVertex(sizeX * in, sizeY * in, -sizeZ);
+        tessellator.addVertex(sizeX * in, sizeY * in, sizeZ);
 
-        renderer.pos(sizeX * in, -sizeY * in, -sizeZ).endVertex();
-        renderer.pos(sizeX * in, -sizeY * in, sizeZ).endVertex();
+        tessellator.addVertex(sizeX * in, -sizeY * in, -sizeZ);
+        tessellator.addVertex(sizeX * in, -sizeY * in, sizeZ);
 
-        Tessellator.getInstance().draw();
+        tessellator.draw();
     }
 }

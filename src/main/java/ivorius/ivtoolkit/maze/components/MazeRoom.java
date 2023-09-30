@@ -37,7 +37,7 @@ public class MazeRoom
 
     public MazeRoom(NBTTagIntArray intArray)
     {
-        coordinates = intArray.getIntArray().clone();
+        coordinates = intArray.func_150302_c().clone();
     }
 
     public int getDimensions()
@@ -130,6 +130,6 @@ public class MazeRoom
 
     public NBTTagIntArray storeInNBT()
     {
-        return new NBTTagIntArray(coordinates.clone());
+        return new NBTTagIntArray(coordinates);
     }
 }

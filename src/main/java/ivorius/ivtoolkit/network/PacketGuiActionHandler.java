@@ -16,29 +16,28 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import net.minecraft.inventory.Container;
-import net.minecraftforge.fml.network.NetworkEvent;
-
-import java.util.function.Supplier;
+import net.minecraft.network.NetHandlerPlayServer;
 
 /**
  * Created by lukas on 02.07.14.
  */
-public class PacketGuiActionHandler
+public class PacketGuiActionHandler implements IMessageHandler<PacketGuiAction, IMessage>
 {
-    public static void handle(PacketGuiAction packet, Supplier<NetworkEvent.Context> supplier)
+    @Override
+    public IMessage onMessage(PacketGuiAction message, MessageContext ctx)
     {
-        NetworkEvent.Context context = supplier.get();
+        NetHandlerPlayServer netHandler = ctx.getServerHandler();
 
-        SchedulingMessageHandler.schedule(context, () -> handleServer(packet, context));
-    }
-
-    protected static <T> void handleServer(PacketGuiAction message, NetworkEvent.Context context)
-    {
-        Container container = context.getSender().openContainer;
-        
-        if (container instanceof PacketGuiAction.ActionHandler) {
+        Container container = netHandler.playerEntity.openContainer;
+        if (container instanceof PacketGuiAction.ActionHandler)
+        {
             ((PacketGuiAction.ActionHandler) container).handleAction(message.getContext(), message.getPayload());
         }
+
+        return null;
     }
 }

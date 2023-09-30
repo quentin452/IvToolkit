@@ -16,15 +16,14 @@
 
 package ivorius.ivtoolkit.blocks;
 
+import ivorius.ivtoolkit.math.IvBytePacker;
 import ivorius.ivtoolkit.tools.IvNBTHelper;
 import ivorius.ivtoolkit.tools.MCRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.List;
  */
 public class IvBlockMapper
 {
-    private List<String> mapping;
+    private List<Block> mapping;
 
     public IvBlockMapper()
     {
@@ -43,18 +42,41 @@ public class IvBlockMapper
 
     public IvBlockMapper(NBTTagCompound compound, String key, MCRegistry registry)
     {
-        this(compound.getList(key, Constants.NBT.TAG_STRING), registry);
+        this(compound.getTagList(key, Constants.NBT.TAG_STRING), registry);
     }
 
     public IvBlockMapper(NBTTagList list, MCRegistry registry)
     {
-        mapping = new ArrayList<>(list.size());
+        mapping = new ArrayList<>(list.tagCount());
 
-        for (int i = 0; i < list.size(); i++)
-            mapping.add(list.getString(i));
+        for (int i = 0; i < list.tagCount(); i++)
+        {
+            mapping.add(registry.blockFromID(list.getStringTagAt(i)));
+        }
     }
 
-    public String getBlock(int mapping)
+    public void addMapping(Block block)
+    {
+        if (!mapping.contains(block))
+        {
+            mapping.add(block);
+        }
+    }
+
+    public void addMapping(Block[] blocks)
+    {
+        for (Block block : blocks)
+        {
+            addMapping(block);
+        }
+    }
+
+    public int getMapping(Block block)
+    {
+        return mapping.indexOf(block);
+    }
+
+    public Block getBlock(int mapping)
     {
         return this.mapping.get(mapping);
     }
@@ -64,16 +86,73 @@ public class IvBlockMapper
         return mapping.size();
     }
 
-    public String[] createBlocksFromNBT(NBTTagCompound compound)
+    public NBTTagList createTagList()
     {
-        String[] blocks;
+        NBTTagList list = new NBTTagList();
+
+        for (Block block : mapping)
+        {
+            String name = Block.blockRegistry.getNameForObject(block);
+
+            if (name != null)
+                list.appendTag(new NBTTagString(name));
+            else
+            {
+                list.appendTag(new NBTTagString("minecraft:stone"));
+                System.out.println("Did not find name for block '" + block + "' to map");
+            }
+        }
+
+        return list;
+    }
+
+    public NBTTagCompound createNBTForBlocks(Block[] blocks)
+    {
+        NBTTagCompound compound = new NBTTagCompound();
+
+        int[] vals = new int[blocks.length];
+        for (int i = 0; i < blocks.length; i++)
+            vals[i] = getMapping(blocks[i]);
+        NBTTagCompound compressed = new NBTTagCompound();
+        IvNBTHelper.writeCompressed("data", vals, getMapSize() - 1, compressed);
+        compound.setTag("blocksCompressed", compressed);
+
+//        if (getMapSize() <= Byte.MAX_VALUE)
+//        {
+//            byte[] byteArray = new byte[blocks.length];
+//
+//            for (int i = 0; i < blocks.length; i++)
+//            {
+//                byteArray[i] = (byte) getMapping(blocks[i]);
+//            }
+//
+//            compound.setByteArray("blockBytes", byteArray);
+//        }
+//        else
+//        {
+//            int[] intArray = new int[blocks.length];
+//
+//            for (int i = 0; i < blocks.length; i++)
+//            {
+//                intArray[i] = getMapping(blocks[i]);
+//            }
+//
+//            compound.setIntArray("blockInts", intArray);
+//        }
+
+        return compound;
+    }
+
+    public Block[] createBlocksFromNBT(NBTTagCompound compound)
+    {
+        Block[] blocks;
 
         if (compound.hasKey("blocksCompressed"))
         {
-            NBTTagCompound compressed = compound.getCompound("blocksCompressed");
+            NBTTagCompound compressed = compound.getCompoundTag("blocksCompressed");
             int[] vals = IvNBTHelper.readCompressed("data", compressed);
 
-            blocks = new String[vals.length];
+            blocks = new Block[vals.length];
 
             for (int i = 0; i < vals.length; i++)
                 blocks[i] = getBlock(vals[i]);
@@ -81,7 +160,7 @@ public class IvBlockMapper
         else if (compound.hasKey("blockBytes"))
         {
             byte[] byteArray = compound.getByteArray("blockBytes");
-            blocks = new String[byteArray.length];
+            blocks = new Block[byteArray.length];
 
             for (int i = 0; i < byteArray.length; i++)
                 blocks[i] = getBlock(byteArray[i]);
@@ -89,7 +168,7 @@ public class IvBlockMapper
         else if (compound.hasKey("blockInts"))
         {
             int[] intArray = compound.getIntArray("blockInts");
-            blocks = new String[intArray.length];
+            blocks = new Block[intArray.length];
 
             for (int i = 0; i < intArray.length; i++)
                 blocks[i] = getBlock(intArray[i]);

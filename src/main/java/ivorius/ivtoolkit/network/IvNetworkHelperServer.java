@@ -16,19 +16,18 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.FMLOutboundHandler;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import io.netty.channel.Channel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.Packet;
-import net.minecraft.server.management.PlayerChunkMap;
+import net.minecraft.server.management.PlayerManager;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.PacketDistributor;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,33 +39,54 @@ import java.util.stream.Collectors;
  */
 public class IvNetworkHelperServer
 {
-    public static <UTileEntity extends TileEntity & PartialUpdateHandler> void sendTileEntityUpdatePacket(UTileEntity tileEntity, String context, SimpleChannel network, EntityPlayer player, Object... params)
+    public static <UTileEntity extends TileEntity & PartialUpdateHandler> void sendTileEntityUpdatePacket(UTileEntity tileEntity, String context, SimpleNetworkWrapper network, EntityPlayer player, Object... params)
     {
         if (!(player instanceof EntityPlayerMP))
             throw new UnsupportedOperationException();
 
-        PacketTileEntityData packet = PacketTileEntityData.packetEntityData(tileEntity, context, params);
-        sendToPlayer(network, (EntityPlayerMP) player, packet);
+        network.sendTo(PacketTileEntityData.packetEntityData(tileEntity, context, params), (EntityPlayerMP) player);
     }
 
-    public static <UTileEntity extends TileEntity & PartialUpdateHandler> void sendTileEntityUpdatePacket(UTileEntity tileEntity, String context, SimpleChannel network, Object... params)
+    public static <UTileEntity extends TileEntity & PartialUpdateHandler> void sendTileEntityUpdatePacket(UTileEntity tileEntity, String context, SimpleNetworkWrapper network, Object... params)
     {
-        sendToPlayersWatchingChunk(tileEntity.getWorld(), tileEntity.getPos().getX() / 16, tileEntity.getPos().getZ() / 16, network, PacketTileEntityData.packetEntityData(tileEntity, context, params));
+        sendToPlayersWatchingChunk(tileEntity.getWorldObj(), tileEntity.xCoord / 16, tileEntity.zCoord / 16, network, PacketTileEntityData.packetEntityData(tileEntity, context, params));
     }
 
-    public static void sendToPlayersWatchingChunk(World world, int chunkX, int chunkZ, SimpleChannel channel, Object message)
+    public static void sendToPlayersWatchingChunk(World world, int chunkX, int chunkZ, SimpleNetworkWrapper network, IMessage message)
     {
-        channel.send(PacketDistributor.TRACKING_CHUNK.with(() -> world.getChunk(chunkX, chunkZ)), message);
+        List<EntityPlayerMP> playersWatching = getPlayersWatchingChunk(world, chunkX, chunkZ);
+
+        for (EntityPlayerMP playerMP : playersWatching)
+        {
+            network.sendTo(message, playerMP);
+        }
+    }
+
+    public static void sendToPlayersWatchingChunk(World world, int chunkX, int chunkZ, Channel channel, Object message)
+    {
+        List<EntityPlayerMP> playersWatching = getPlayersWatchingChunk(world, chunkX, chunkZ);
+
+        for (EntityPlayerMP playerMP : playersWatching)
+        {
+            sendToPlayer(channel, playerMP, message);
+        }
     }
 
     public static void sendToPlayersWatchingChunk(World world, int chunkX, int chunkZ, Packet packet)
     {
-        PacketDistributor.TRACKING_CHUNK.with(() -> world.getChunk(chunkX, chunkZ)).send(packet);
+        List<EntityPlayerMP> playersWatching = getPlayersWatchingChunk(world, chunkX, chunkZ);
+
+        for (EntityPlayerMP playerMP : playersWatching)
+        {
+            playerMP.playerNetServerHandler.sendPacket(packet);
+        }
     }
 
-    public static void sendToPlayer(SimpleChannel channel, EntityPlayerMP playerMP, Object message)
+    public static void sendToPlayer(Channel channel, EntityPlayerMP playerMP, Object message)
     {
-        channel.send(PacketDistributor.PLAYER.with(() -> playerMP), message);
+        channel.attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.PLAYER);
+        channel.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(playerMP);
+        channel.writeAndFlush(message);
     }
 
     public static List<EntityPlayerMP> getPlayersWatchingChunk(World world, int chunkX, int chunkZ)
@@ -79,34 +99,31 @@ public class IvNetworkHelperServer
         ArrayList<EntityPlayerMP> playersWatching = new ArrayList<>();
 
         WorldServer server = (WorldServer) world;
-        PlayerChunkMap playerManager = server.getPlayerChunkMap();
+        PlayerManager playerManager = server.getPlayerManager();
 
-        List<EntityPlayer> players = server.playerEntities;
-        List<EntityPlayerMP> mpplayers = ((List) players.stream().filter(p -> p instanceof EntityPlayerMP).collect(Collectors.toList()));
-
-        playersWatching.addAll(mpplayers.stream().filter(player -> playerManager.isPlayerWatchingChunk(player, chunkX, chunkZ)).collect(Collectors.toList()));
+        List<EntityPlayerMP> players = server.playerEntities;
+        playersWatching.addAll(players.stream().filter(player -> playerManager.isPlayerWatchingChunk(player, chunkX, chunkZ)).collect(Collectors.toList()));
 
         return playersWatching;
     }
 
-    public static void sendEEPUpdatePacketToPlayer(Entity entity, String capabilityKey, EnumFacing facing, String context, SimpleChannel network, EntityPlayer player, Object... params)
+    public static void sendEEPUpdatePacketToPlayer(Entity entity, String eepKey, String context, SimpleNetworkWrapper network, EntityPlayer player, Object... params)
     {
         if (!(player instanceof EntityPlayerMP))
             throw new UnsupportedOperationException();
 
-        PacketEntityCapabilityData packet = PacketEntityCapabilityData.packetEntityData(entity, capabilityKey, facing, context, params);
-        sendToPlayer(network, (EntityPlayerMP) player, packet);
+        network.sendTo(PacketExtendedEntityPropertiesData.packetEntityData(entity, eepKey, context, params), (EntityPlayerMP) player);
     }
 
-    public static void sendEEPUpdatePacket(Entity entity, String capabilityKey, EnumFacing facing, String context, SimpleChannel network, Object... params)
+    public static void sendEEPUpdatePacket(Entity entity, String eepKey, String context, SimpleNetworkWrapper network, Object... params)
     {
-        if (entity.world.isRemote)
+        if (entity.worldObj.isRemote)
             throw new UnsupportedOperationException();
 
-        for (EntityPlayer player : ((WorldServer) entity.world).getEntityTracker().getTrackingPlayers(entity))
-            sendEEPUpdatePacketToPlayer(entity, capabilityKey, facing, context, network, player, params);
+        for (EntityPlayer player : ((WorldServer) entity.worldObj).getEntityTracker().getTrackingPlayers(entity))
+            sendEEPUpdatePacketToPlayer(entity, eepKey, context, network, player, params);
 
         if (entity instanceof EntityPlayerMP) // Players don't 'track' themselves
-            sendEEPUpdatePacketToPlayer(entity, capabilityKey, facing, context, network, (EntityPlayer) entity, params);
+            sendEEPUpdatePacketToPlayer(entity, eepKey, context, network, (EntityPlayer) entity, params);
     }
 }

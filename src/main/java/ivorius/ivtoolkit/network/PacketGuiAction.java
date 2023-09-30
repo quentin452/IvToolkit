@@ -16,14 +16,15 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketBuffer;
 
 /**
  * Created by lukas on 01.07.14.
  */
-public class PacketGuiAction implements IvPacket
+public class PacketGuiAction implements IMessage
 {
     private String context;
     private ByteBuf payload;
@@ -42,7 +43,8 @@ public class PacketGuiAction implements IvPacket
     {
         ByteBuf payload = Unpooled.buffer();
 
-        for (Number num : args) {
+        for (Number num : args)
+        {
             IvPacketHelper.writeNumber(payload, num);
         }
 
@@ -70,16 +72,16 @@ public class PacketGuiAction implements IvPacket
     }
 
     @Override
-    public void decode(PacketBuffer buf)
+    public void fromBytes(ByteBuf buf)
     {
-        context = buf.readString(1000);
+        context = ByteBufUtils.readUTF8String(buf);
         payload = IvPacketHelper.readByteBuffer(buf);
     }
 
     @Override
-    public void encode(PacketBuffer buf)
+    public void toBytes(ByteBuf buf)
     {
-        buf.writeString(context);
+        ByteBufUtils.writeUTF8String(buf, context);
         IvPacketHelper.writeByteBuffer(buf, payload);
     }
 

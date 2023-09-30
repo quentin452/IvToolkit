@@ -16,9 +16,9 @@
 
 package ivorius.ivtoolkit.math;
 
-import net.minecraft.util.math.MathHelper;
-
-import java.util.Arrays;
+import gnu.trove.function.TDoubleFunction;
+import gnu.trove.function.TIntFunction;
+import net.minecraft.util.MathHelper;
 
 /**
  * Created by lukas on 22.06.14.
@@ -37,7 +37,7 @@ public class IvVecMathHelper
 
     public static double length(double[] vector)
     {
-        return MathHelper.sqrt(lengthSQ(vector));
+        return MathHelper.sqrt_double(lengthSQ(vector));
     }
 
     public static double distanceSQ(double[] pos1, double[] pos2)
@@ -52,7 +52,7 @@ public class IvVecMathHelper
 
     public static double distance(double[] pos1, double[] pos2)
     {
-        return MathHelper.sqrt(distanceSQ(pos1, pos2));
+        return MathHelper.sqrt_double(distanceSQ(pos1, pos2));
     }
 
     public static double lengthSQ(int[] vector)
@@ -67,7 +67,7 @@ public class IvVecMathHelper
 
     public static double length(int[] vector)
     {
-        return MathHelper.sqrt(lengthSQ(vector));
+        return MathHelper.sqrt_double(lengthSQ(vector));
     }
 
     public static double distanceSQ(int[] pos1, int[] pos2)
@@ -82,7 +82,7 @@ public class IvVecMathHelper
 
     public static double distance(int[] pos1, int[] pos2)
     {
-        return MathHelper.sqrt(distanceSQ(pos1, pos2));
+        return MathHelper.sqrt_double(distanceSQ(pos1, pos2));
     }
 
     public static double lengthSQ(long[] vector)
@@ -97,7 +97,7 @@ public class IvVecMathHelper
 
     public static double length(long[] vector)
     {
-        return MathHelper.sqrt(lengthSQ(vector));
+        return MathHelper.sqrt_double(lengthSQ(vector));
     }
 
     public static double distanceSQ(long[] pos1, long[] pos2)
@@ -112,7 +112,7 @@ public class IvVecMathHelper
 
     public static double distance(long[] pos1, long[] pos2)
     {
-        return MathHelper.sqrt(distanceSQ(pos1, pos2));
+        return MathHelper.sqrt_double(distanceSQ(pos1, pos2));
     }
 
     public static double[] mix(double[] pos1, double[] pos2, double progress)
@@ -150,16 +150,6 @@ public class IvVecMathHelper
         }
 
         return resultVector;
-    }
-
-    public static int product(int[] vector)
-    {
-        return Arrays.stream(vector).reduce(1, (left, right) -> left * right);
-    }
-
-    public static double product(double[] vector)
-    {
-        return Arrays.stream(vector).reduce(1, (left, right) -> left * right);
     }
 
     public static double dotProduct(double[] pos1, double[] pos2)

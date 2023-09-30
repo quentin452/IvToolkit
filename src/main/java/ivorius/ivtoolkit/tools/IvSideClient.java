@@ -16,26 +16,26 @@
 
 package ivorius.ivtoolkit.tools;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * Created by lukas on 03.07.14.
  */
 public class IvSideClient
 {
-    @OnlyIn(Dist.CLIENT)
+    @SideOnly(Side.CLIENT)
     public static EntityPlayer getClientPlayer()
     {
-        return Minecraft.getInstance().player;
+        return Minecraft.getMinecraft().thePlayer;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @SideOnly(Side.CLIENT)
     public static World getClientWorld()
     {
-        return Minecraft.getInstance().world;
+        return Minecraft.getMinecraft().theWorld;
     }
 }

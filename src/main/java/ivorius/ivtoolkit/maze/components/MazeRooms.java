@@ -31,7 +31,14 @@ public class MazeRooms
         if (room.getDimensions() < 3)
             throw new IllegalArgumentException();
 
-        return new MazeRoom(transform.applyOn(room.getCoordinates(), size, 1));
+        int[] roomPosition = room.getCoordinates();
+        int[] transformedRoom = transform.apply(roomPosition, size);
+
+        roomPosition[0] = transformedRoom[0];
+        roomPosition[1] = transformedRoom[1];
+        roomPosition[2] = transformedRoom[2];
+
+        return new MazeRoom(roomPosition);
     }
 
     public static Stream<MazeRoom> neighbors(final MazeRoom room, IntStream dimensions)

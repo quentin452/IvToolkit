@@ -16,21 +16,19 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import ivorius.ivtoolkit.blocks.BlockPositions;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionType;
 
 /**
  * Created by lukas on 01.07.14.
  */
-public class PacketTileEntityClientEvent implements IvPacket
+public class PacketTileEntityClientEvent implements IMessage
 {
-    private DimensionType dimension;
-    private BlockPos pos;
+    private int dimension;
+    private int x, y, z;
     private String context;
     private ByteBuf payload;
 
@@ -38,10 +36,12 @@ public class PacketTileEntityClientEvent implements IvPacket
     {
     }
 
-    public PacketTileEntityClientEvent(DimensionType dimension, BlockPos pos, String context, ByteBuf payload)
+    public PacketTileEntityClientEvent(int dimension, int x, int y, int z, String context, ByteBuf payload)
     {
         this.dimension = dimension;
-        this.pos = pos;
+        this.x = x;
+        this.y = y;
+        this.z = z;
         this.context = context;
         this.payload = payload;
     }
@@ -50,27 +50,47 @@ public class PacketTileEntityClientEvent implements IvPacket
     {
         ByteBuf buf = Unpooled.buffer();
         entity.assembleClientEvent(buf, context, params);
-        return new PacketTileEntityClientEvent(entity.getWorld().getDimension().getType(), entity.getPos(), context, buf);
+        return new PacketTileEntityClientEvent(entity.getWorldObj().provider.dimensionId, entity.xCoord, entity.yCoord, entity.zCoord, context, buf);
     }
 
-    public DimensionType getDimension()
+    public int getDimension()
     {
         return dimension;
     }
 
-    public void setDimension(DimensionType dimension)
+    public void setDimension(int dimension)
     {
         this.dimension = dimension;
     }
 
-    public BlockPos getPos()
+    public int getX()
     {
-        return pos;
+        return x;
     }
 
-    public void setPos(BlockPos pos)
+    public void setX(int x)
     {
-        this.pos = pos;
+        this.x = x;
+    }
+
+    public int getY()
+    {
+        return y;
+    }
+
+    public void setY(int y)
+    {
+        this.y = y;
+    }
+
+    public int getZ()
+    {
+        return z;
+    }
+
+    public void setZ(int z)
+    {
+        this.z = z;
     }
 
     public String getContext()
@@ -94,20 +114,24 @@ public class PacketTileEntityClientEvent implements IvPacket
     }
 
     @Override
-    public void decode(PacketBuffer buf)
+    public void fromBytes(ByteBuf buf)
     {
-        dimension = DimensionType.getById(buf.readInt());
-        pos = BlockPositions.readFromBuffer(buf);
-        context = buf.readString(1000);
+        dimension = buf.readInt();
+        x = buf.readInt();
+        y = buf.readInt();
+        z = buf.readInt();
+        context = ByteBufUtils.readUTF8String(buf);
         payload = IvPacketHelper.readByteBuffer(buf);
     }
 
     @Override
-    public void encode(PacketBuffer buf)
+    public void toBytes(ByteBuf buf)
     {
-        buf.writeInt(dimension.getId());
-        BlockPositions.writeToBuffer(pos, buf);
-        buf.writeString(context);
+        buf.writeInt(dimension);
+        buf.writeInt(x);
+        buf.writeInt(y);
+        buf.writeInt(z);
+        ByteBufUtils.writeUTF8String(buf, context);
         IvPacketHelper.writeByteBuffer(buf, payload);
     }
 }

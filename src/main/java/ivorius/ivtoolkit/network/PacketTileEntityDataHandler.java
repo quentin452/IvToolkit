@@ -16,34 +16,27 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import ivorius.ivtoolkit.tools.IvSideClient;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.network.NetworkEvent;
-
-import java.util.function.Supplier;
 
 /**
  * Created by lukas on 02.07.14.
  */
-public class PacketTileEntityDataHandler
+public class PacketTileEntityDataHandler implements IMessageHandler<PacketTileEntityData, IMessage>
 {
-    public static void handle(PacketTileEntityData packet, Supplier<NetworkEvent.Context> supplier)
-    {
-        NetworkEvent.Context context = supplier.get();
-
-        SchedulingMessageHandler.schedule(context, () -> handleClient(packet, context));
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    protected static <T> void handleClient(PacketTileEntityData message, NetworkEvent.Context context)
+    @Override
+    public IMessage onMessage(PacketTileEntityData message, MessageContext ctx)
     {
         World world = IvSideClient.getClientWorld();
-        TileEntity entity = world.getTileEntity(message.getPos());
+        TileEntity entity = world.getTileEntity(message.getX(), message.getY(), message.getZ());
 
         if (entity != null)
             ((PartialUpdateHandler) entity).readUpdateData(message.getPayload(), message.getContext());
+
+        return null;
     }
 }

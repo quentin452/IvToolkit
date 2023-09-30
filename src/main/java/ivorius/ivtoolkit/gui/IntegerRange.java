@@ -16,7 +16,7 @@
 
 package ivorius.ivtoolkit.gui;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.MathHelper;
 
 /**
  * Created by lukas on 13.06.14.
@@ -35,8 +35,8 @@ public class IntegerRange
     @Deprecated
     public IntegerRange(FloatRange floatRange)
     {
-        min = MathHelper.floor(floatRange.getMin());
-        max = MathHelper.floor(floatRange.getMax());
+        min = MathHelper.floor_float(floatRange.getMin());
+        max = MathHelper.floor_float(floatRange.getMax());
     }
 
     public int getMin()

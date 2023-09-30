@@ -16,7 +16,9 @@
 
 package ivorius.ivtoolkit.logic;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import gnu.trove.impl.Constants;
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,13 +29,12 @@ import java.util.Set;
  */
 public class ReferenceCounter<V>
 {
-    private Object2IntOpenHashMap<V> map;
+    private TObjectIntMap<V> map;
     private Set<V> freeObjects;
 
     public ReferenceCounter()
     {
-        map = new Object2IntOpenHashMap<>();
-        map.defaultReturnValue(0);
+        map = new TObjectIntHashMap<>(Constants.DEFAULT_CAPACITY, Constants.DEFAULT_LOAD_FACTOR, 0);
         freeObjects = new HashSet<>();
     }
 
@@ -52,7 +53,7 @@ public class ReferenceCounter<V>
         if (retainCount < 1)
             throw new RuntimeException("Attempting to retain an object by a negative amount - use release instead.");
 
-        map.addTo(object, retainCount);
+        map.adjustOrPutValue(object, retainCount, retainCount);
     }
 
     public boolean release(V object, int releaseCount)
@@ -60,7 +61,7 @@ public class ReferenceCounter<V>
         if (releaseCount < 1)
             throw new RuntimeException("Attempting to release an object by a negative amount - use retain instead.");
 
-        int newCount = map.addTo(object, -releaseCount);
+        int newCount = map.adjustOrPutValue(object, -releaseCount, -releaseCount);
 
         if (newCount < 0)
             throw new RuntimeException("Attempting to release a freed object!");

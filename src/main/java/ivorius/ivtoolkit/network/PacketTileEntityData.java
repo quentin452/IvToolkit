@@ -16,19 +16,18 @@
 
 package ivorius.ivtoolkit.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import ivorius.ivtoolkit.blocks.BlockPositions;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
 
 /**
  * Created by lukas on 01.07.14.
  */
-public class PacketTileEntityData implements IvPacket
+public class PacketTileEntityData implements IMessage
 {
-    private BlockPos pos;
+    private int x, y, z;
     private String context;
     private ByteBuf payload;
 
@@ -36,9 +35,11 @@ public class PacketTileEntityData implements IvPacket
     {
     }
 
-    public PacketTileEntityData(BlockPos pos, String context, ByteBuf payload)
+    public PacketTileEntityData(int x, int y, int z, String context, ByteBuf payload)
     {
-        this.pos = pos;
+        this.x = x;
+        this.y = y;
+        this.z = z;
         this.context = context;
         this.payload = payload;
     }
@@ -47,17 +48,37 @@ public class PacketTileEntityData implements IvPacket
     {
         ByteBuf buf = Unpooled.buffer();
         entity.writeUpdateData(buf, context, params);
-        return new PacketTileEntityData(entity.getPos(), context, buf);
+        return new PacketTileEntityData(entity.xCoord, entity.yCoord, entity.zCoord, context, buf);
     }
 
-    public BlockPos getPos()
+    public int getX()
     {
-        return pos;
+        return x;
     }
 
-    public void setPos(BlockPos pos)
+    public void setX(int x)
     {
-        this.pos = pos;
+        this.x = x;
+    }
+
+    public int getY()
+    {
+        return y;
+    }
+
+    public void setY(int y)
+    {
+        this.y = y;
+    }
+
+    public int getZ()
+    {
+        return z;
+    }
+
+    public void setZ(int z)
+    {
+        this.z = z;
     }
 
     public String getContext()
@@ -81,18 +102,22 @@ public class PacketTileEntityData implements IvPacket
     }
 
     @Override
-    public void decode(PacketBuffer buf)
+    public void fromBytes(ByteBuf buf)
     {
-        pos = BlockPositions.readFromBuffer(buf);
-        context = buf.readString(1000);
+        x = buf.readInt();
+        y = buf.readInt();
+        z = buf.readInt();
+        context = ByteBufUtils.readUTF8String(buf);
         payload = IvPacketHelper.readByteBuffer(buf);
     }
 
     @Override
-    public void encode(PacketBuffer buf)
+    public void toBytes(ByteBuf buf)
     {
-        BlockPositions.writeToBuffer(pos, buf);
-        buf.writeString(context);
+        buf.writeInt(x);
+        buf.writeInt(y);
+        buf.writeInt(z);
+        ByteBufUtils.writeUTF8String(buf, context);
         IvPacketHelper.writeByteBuffer(buf, payload);
     }
 

@@ -16,8 +16,7 @@
 
 package ivorius.ivtoolkit.blocks;
 
-import net.minecraft.util.EnumFacing;
-import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 
 /**
  * Created by lukas on 26.07.14.
@@ -26,24 +25,7 @@ public class IvRotatableBlockRenderHelper
 {
     public static void transformFor(IvTileEntityRotatable tileEntity, double renderX, double renderY, double renderZ)
     {
-        GlStateManager.translated(renderX + 0.5, renderY + 0.5, renderZ + 0.5);
-        GlStateManager.rotatef(getAngleFromSouth(tileEntity.getFacing()), 0.0f, 1.0f, 0.0f);
-    }
-
-    public static float getAngleFromSouth(EnumFacing facing)
-    {
-        switch (facing)
-        {
-            case SOUTH:
-                return 180.0f;
-            case WEST:
-                return 90.0f;
-            case NORTH:
-                return 0.0f;
-            case EAST:
-                return 270.0f;
-            default:
-                throw new IllegalArgumentException();
-        }
+        GL11.glTranslated(renderX + 0.5, renderY + 0.5, renderZ + 0.5);
+        GL11.glRotatef(-90.0f * tileEntity.direction + 180.0f, 0.0f, 1.0f, 0.0f);
     }
 }

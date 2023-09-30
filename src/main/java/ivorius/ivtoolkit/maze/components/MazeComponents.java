@@ -16,15 +16,12 @@
 
 package ivorius.ivtoolkit.maze.components;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import ivorius.ivtoolkit.tools.GuavaCollectors;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -36,7 +33,7 @@ public class MazeComponents
     {
         return component -> component.exits().entrySet().stream().map(entry -> {
             MazeRoom dist = entry.getKey().inverseDistance(connection);
-            if (dist != null && strategy.connect(connection, connector, entry.getValue()) >= 0f)
+            if (dist != null && strategy.connect(connection, connector, entry.getValue()))
                 return shift(component, dist);
             return null;
         }).filter(Objects::nonNull);
@@ -44,11 +41,21 @@ public class MazeComponents
 
     public static <M extends MazeComponent<C>, C> ShiftedMazeComponent<M, C> shift(final M component, final MazeRoom shift)
     {
-        ImmutableSet<MazeRoom> rooms = component.rooms().stream().map(r -> r != null ? r.add(shift) : null).collect(GuavaCollectors.immutableSet());
-        ImmutableMap<MazePassage, C> exits = component.exits().keySet().stream().collect(GuavaCollectors.toMap(c1 -> c1 != null ? c1.add(shift) : null, component.exits()::get));
-        ImmutableMultimap<MazePassage, MazePassage> reachability = component.reachability().keySet().stream().collect(GuavaCollectors.toMultimap(c -> c.add(shift), c -> component.reachability().get(c).stream().map(c2 -> c2.add(shift))::iterator));
+        return new ShiftedMazeComponent<>(component, shift,
+                component.rooms().stream().map(r -> r != null ? r.add(shift) : null).collect(GuavaCollectors.immutableSet()),
+                component.exits().keySet().stream().collect(GuavaCollectors.toMap(c1 -> c1 != null ? c1.add(shift) : null, component.exits()::get)),
+                component.reachability().keySet().stream().collect(GuavaCollectors.toMultimap(c -> c.add(shift), c -> component.reachability().get(c).stream().map(c2 -> c2.add(shift))::iterator))
+        );
+    }
 
-        return new ShiftedMazeComponent<>(component, shift, rooms, exits, reachability );
+    public static <C> Predicate<? extends MazeComponent<C>> compatibilityPredicate(final MazeComponent<C> component, final ConnectionStrategy<C> strategy)
+    {
+        return input -> componentsCompatible(component, input, strategy);
+    }
+
+    public static <C> boolean componentsCompatible(final MazeComponent<C> existing, final MazeComponent<C> add, final ConnectionStrategy<C> strategy)
+    {
+        return !overlap(existing, add) && allExitsCompatible(existing, add, strategy);
     }
 
     public static boolean overlap(MazeComponent<?> left, MazeComponent<?> right)
@@ -56,14 +63,8 @@ public class MazeComponents
         return Sets.intersection(left.rooms(), right.rooms()).size() > 0;
     }
 
-    public static <C> float connectWeight(final MazeComponent<C> existing, final MazeComponent<C> add, final ConnectionStrategy<C> strategy)
+    public static <C> boolean allExitsCompatible(final MazeComponent<C> existing, final MazeComponent<C> add, final ConnectionStrategy<C> strategy)
     {
-        float total = 1f;
-        for (Map.Entry<MazePassage, C> entry : add.exits().entrySet()) // Try
-        {
-            if ((total *= strategy.connect(entry.getKey(), existing.exits().get(entry.getKey().inverse()), entry.getValue())) < 0)
-                return -1;
-        }
-        return total;
+        return add.exits().entrySet().stream().allMatch(input -> strategy.connect(input.getKey(), existing.exits().get(input.getKey().inverse()), input.getValue()));
     }
 }

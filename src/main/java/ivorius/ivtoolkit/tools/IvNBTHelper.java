@@ -23,9 +23,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,63 +38,63 @@ public class IvNBTHelper
 
     public static byte readByte(NBTTagCompound compound, String key, byte defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_BYTE)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_BYTE)
                 ? compound.getByte(key)
                 : defaultValue;
     }
 
     public static byte[] readByteArray(NBTTagCompound compound, String key, byte[] defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_BYTE_ARRAY)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_BYTE_ARRAY)
                 ? compound.getByteArray(key)
                 : defaultValue;
     }
 
     public static double readDouble(NBTTagCompound compound, String key, double defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_DOUBLE)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_DOUBLE)
                 ? compound.getDouble(key)
                 : defaultValue;
     }
 
     public static float readFloat(NBTTagCompound compound, String key, float defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_FLOAT)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_FLOAT)
                 ? compound.getFloat(key)
                 : defaultValue;
     }
 
     public static int readInt(NBTTagCompound compound, String key, int defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_INT)
-                ? compound.getInt(key)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_INT)
+                ? compound.getInteger(key)
                 : defaultValue;
     }
 
     public static int[] readIntArray(NBTTagCompound compound, String key, int[] defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_INT_ARRAY)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_INT_ARRAY)
                 ? compound.getIntArray(key)
                 : defaultValue;
     }
 
     public static long readLong(NBTTagCompound compound, String key, long defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_LONG)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_LONG)
                 ? compound.getLong(key)
                 : defaultValue;
     }
 
     public static short readShort(NBTTagCompound compound, String key, short defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_SHORT)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_SHORT)
                 ? compound.getShort(key)
                 : defaultValue;
     }
 
     public static String readString(NBTTagCompound compound, String key, String defaultValue)
     {
-        return compound != null && compound.contains(key, Constants.NBT.TAG_STRING)
+        return compound != null && compound.hasKey(key, Constants.NBT.TAG_STRING)
                 ? compound.getString(key)
                 : defaultValue;
     }
@@ -105,11 +103,11 @@ public class IvNBTHelper
     {
         if (compound.hasKey(key))
         {
-            NBTTagList list = compound.getList(key, Constants.NBT.TAG_DOUBLE);
-            double[] array = new double[list.size()];
+            NBTTagList list = compound.getTagList(key, Constants.NBT.TAG_DOUBLE);
+            double[] array = new double[list.tagCount()];
 
             for (int i = 0; i < array.length; i++)
-                array[i] = list.getDouble(i);
+                array[i] = list.func_150309_d(i);
 
             return array;
         }
@@ -124,7 +122,7 @@ public class IvNBTHelper
             NBTTagList list = new NBTTagList();
 
             for (double d : array)
-                list.add(new NBTTagDouble(d));
+                list.appendTag(new NBTTagDouble(d));
 
             compound.setTag(key, list);
         }
@@ -134,11 +132,11 @@ public class IvNBTHelper
     {
         if (compound.hasKey(id))
         {
-            NBTTagList nbtTagList = compound.getList(id, Constants.NBT.TAG_STRING);
-            String[] strings = new String[nbtTagList.size()];
+            NBTTagList nbtTagList = compound.getTagList(id, Constants.NBT.TAG_STRING);
+            String[] strings = new String[nbtTagList.tagCount()];
 
             for (int i = 0; i < strings.length; i++)
-                strings[i] = nbtTagList.getString(i);
+                strings[i] = nbtTagList.getStringTagAt(i);
 
             return strings;
         }
@@ -153,7 +151,7 @@ public class IvNBTHelper
             NBTTagList nbtTagList = new NBTTagList();
 
             for (String s : strings)
-                nbtTagList.add(new NBTTagString(s));
+                nbtTagList.appendTag(new NBTTagString(s));
 
             compound.setTag(id, nbtTagList);
         }
@@ -163,11 +161,11 @@ public class IvNBTHelper
     {
         if (compound.hasKey(id))
         {
-            NBTTagList nbtTagList = compound.getList(id, Constants.NBT.TAG_COMPOUND);
-            ItemStack[] itemStacks = new ItemStack[nbtTagList.size()];
+            NBTTagList nbtTagList = compound.getTagList(id, Constants.NBT.TAG_COMPOUND);
+            ItemStack[] itemStacks = new ItemStack[nbtTagList.tagCount()];
 
             for (int i = 0; i < itemStacks.length; i++)
-                itemStacks[i] = ItemStack.read(nbtTagList.getCompound(i));
+                itemStacks[i] = ItemStack.loadItemStackFromNBT(nbtTagList.getCompoundTagAt(i));
 
             return itemStacks;
         }
@@ -184,8 +182,8 @@ public class IvNBTHelper
             for (ItemStack stack : stacks)
             {
                 NBTTagCompound tagCompound = new NBTTagCompound();
-                stack.write(tagCompound);
-                nbtTagList.add(tagCompound);
+                stack.writeToNBT(tagCompound);
+                nbtTagList.appendTag(tagCompound);
             }
 
             compound.setTag(id, nbtTagList);
@@ -196,11 +194,11 @@ public class IvNBTHelper
     {
         if (compound.hasKey(id))
         {
-            NBTTagList nbtTagList = compound.getList(id, Constants.NBT.TAG_STRING);
-            Block[] blocks = new Block[nbtTagList.size()];
+            NBTTagList nbtTagList = compound.getTagList(id, Constants.NBT.TAG_STRING);
+            Block[] blocks = new Block[nbtTagList.tagCount()];
 
             for (int i = 0; i < blocks.length; i++)
-                blocks[i] = registry.blockFromID(new ResourceLocation(nbtTagList.getString(i)));
+                blocks[i] = registry.blockFromID(nbtTagList.getStringTagAt(i));
 
             return blocks;
         }
@@ -215,7 +213,7 @@ public class IvNBTHelper
             NBTTagList nbtTagList = new NBTTagList();
 
             for (Block b : blocks)
-                nbtTagList.add(new NBTTagString(ForgeRegistries.BLOCKS.getKey(b).toString()));
+                nbtTagList.appendTag(new NBTTagString(Block.blockRegistry.getNameForObject(b)));
 
             compound.setTag(id, nbtTagList);
         }
@@ -248,11 +246,11 @@ public class IvNBTHelper
     {
         if (compound.hasKey(id))
         {
-            NBTTagList nbtTagList = compound.getList(id, Constants.NBT.TAG_STRING);
-            PotionEffect[] potions = new PotionEffect[nbtTagList.size()];
+            NBTTagList nbtTagList = compound.getTagList(id, Constants.NBT.TAG_STRING);
+            PotionEffect[] potions = new PotionEffect[nbtTagList.tagCount()];
 
             for (int i = 0; i < potions.length; i++)
-                potions[i] = PotionEffect.read(nbtTagList.getCompound(i));
+                potions[i] = PotionEffect.readCustomPotionEffectFromNBT(nbtTagList.getCompoundTagAt(i));
 
             return potions;
         }
@@ -267,7 +265,7 @@ public class IvNBTHelper
             NBTTagList nbtTagList = new NBTTagList();
 
             for (PotionEffect p : potions)
-                nbtTagList.add(p.write(new NBTTagCompound()));
+                nbtTagList.appendTag(p.writeCustomPotionEffectToNBT(new NBTTagCompound()));
 
             compound.setTag(id, nbtTagList);
         }
@@ -285,14 +283,14 @@ public class IvNBTHelper
         byte[] bytes = IvBytePacker.packValues(intArray, bitLength);
         compound.setByteArray(idBase + "_bytes", bytes);
         compound.setByte(idBase + "_bitLength", bitLength);
-        compound.setInt(idBase + "_length", intArray.length);
+        compound.setInteger(idBase + "_length", intArray.length);
     }
 
     public static int[] readCompressed(String idBase, NBTTagCompound compound)
     {
         byte[] bytes = compound.getByteArray(idBase + "_bytes");
         byte bitLength = compound.getByte(idBase + "_bitLength");
-        int intArrayLength = compound.getInt(idBase + "_length");
+        int intArrayLength = compound.getInteger(idBase + "_length");
         return IvBytePacker.unpackValues(bytes, bitLength, intArrayLength);
     }
 }

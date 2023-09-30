@@ -16,8 +16,8 @@
 
 package ivorius.ivtoolkit.tools;
 
+import cpw.mods.fml.relauncher.ReflectionHelper;
 import net.minecraft.entity.EntityCreature;
-import net.minecraft.util.math.BlockPos;
 
 import java.lang.reflect.Field;
 
@@ -32,13 +32,13 @@ public class EntityCreatureAccessor
     {
         return maximumHomeDistance != null
                 ? maximumHomeDistance
-                : (maximumHomeDistance = IvReflection.findField(EntityCreature.class, "field_70772_bD"));
+                : (maximumHomeDistance = ReflectionHelper.findField(EntityCreature.class, "maximumHomeDistance", "field_70772_bD"));
     }
 
-    public static void setHomePosition(EntityCreature creature, BlockPos pos)
+    public static void setHomePosition(EntityCreature creature, int x, int y, int z)
     {
-        float currentHomeDistance = creature.getMaximumHomeDistance();
-        creature.setHomePosAndDistance(pos, (int) currentHomeDistance);
+        float currentHomeDistance = creature.func_110174_bM();
+        creature.setHomeArea(x, y, z, (int) currentHomeDistance);
         setMaximumHomeDistance(creature, currentHomeDistance); // Fix for setHomeArea taking an int
     }
 

@@ -16,16 +16,13 @@
 
 package ivorius.ivtoolkit.tools;
 
+import cpw.mods.fml.common.event.FMLInterModComms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.Logger;
-
-import javax.annotation.Nonnull;
-import java.util.Optional;
 
 /**
  * Created by lukas on 07.06.14.
@@ -34,13 +31,13 @@ public abstract class IvFMLIntercommHandler
 {
     private Logger logger;
     private String modOwnerID;
-    private String modID;
+    private Object modInstance;
 
-    protected IvFMLIntercommHandler(Logger logger, String modOwnerID, String modID)
+    protected IvFMLIntercommHandler(Logger logger, String modOwnerID, Object modInstance)
     {
         this.logger = logger;
         this.modOwnerID = modOwnerID;
-        this.modID = modID;
+        this.modInstance = modInstance;
     }
 
     public Logger getLogger()
@@ -63,54 +60,57 @@ public abstract class IvFMLIntercommHandler
         this.modOwnerID = modOwnerID;
     }
 
-    public String getModID()
+    public Object getModInstance()
     {
-        return modID;
+        return modInstance;
     }
 
-    public void setModID(String modID)
+    public void setModInstance(Object modInstance)
     {
-        this.modID = modID;
+        this.modInstance = modInstance;
     }
 
-    public void handleMessages(boolean server)
+    public void handleMessages(boolean server, boolean runtime)
     {
-        InterModComms.getMessages(modID).forEach(message -> {
+        for (FMLInterModComms.IMCMessage message : FMLInterModComms.fetchRuntimeMessages(modInstance))
+        {
             onIMCMessage(message, server, true);
-        });
+        }
     }
 
-    public void onIMCMessage(InterModComms.IMCMessage message, boolean server, boolean runtime)
+    public void onIMCMessage(FMLInterModComms.IMCMessage message, boolean server, boolean runtime)
     {
-        try {
+        try
+        {
             boolean didHandle = handleMessage(message, server, runtime);
 
-            if (!didHandle) {
-                logger.warn("Could not handle message with key '" + message.getMethod() + "'");
+            if (!didHandle)
+            {
+                logger.warn("Could not handle message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'");
             }
         }
-        catch (Exception ex) {
-            logger.error("Exception on message with key '" + message.getMethod() + "'");
+        catch (Exception ex)
+        {
+            logger.error("Exception on message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'");
             ex.printStackTrace();
         }
     }
 
-    protected abstract boolean handleMessage(InterModComms.IMCMessage message, boolean server, boolean runtime);
+    protected abstract boolean handleMessage(FMLInterModComms.IMCMessage message, boolean server, boolean runtime);
 
-    @Nonnull
-    protected <T> Optional<T> messageAs(String key, InterModComms.IMCMessage message, Class<T> expectedType)
+    protected boolean isMessage(String key, FMLInterModComms.IMCMessage message, Class expectedType)
     {
-        if (key.equals(message.getMethod())) {
-            Object thing = message.getMessageSupplier().get();
-
-            if (thing.getClass().isAssignableFrom(expectedType)) {
-                return Optional.of((T) thing);
+        if (key.equals(message.key))
+        {
+            if (message.getMessageType().isAssignableFrom(expectedType))
+            {
+                return true;
             }
 
             faultyMessage(message, expectedType);
         }
 
-        return Optional.empty();
+        return false;
     }
 
     protected Entity getEntity(NBTTagCompound compound, boolean server)
@@ -120,30 +120,56 @@ public abstract class IvFMLIntercommHandler
 
     protected Entity getEntity(NBTTagCompound compound, String worldKey, String entityKey, boolean server)
     {
-        if (!server) {
-            return Minecraft.getInstance().world.getEntityByID(compound.getInt(entityKey));
+        if (!server)
+        {
+            return Minecraft.getMinecraft().theWorld.getEntityByID(compound.getInteger(entityKey));
         }
-        else {
-            DimensionType worldID = DimensionType.getById(compound.getInt(worldKey));
-
-            return ServerLifecycleHooks.getCurrentServer().getWorld(worldID).getEntityByID(compound.getInt(entityKey));
+        else
+        {
+            return MinecraftServer.getServer().worldServerForDimension(compound.getInteger(worldKey)).getEntityByID(compound.getInteger(entityKey));
         }
     }
 
-    protected <T> boolean sendReply(IvIntercommMessages.Replyable<T> message, T value)
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, String value)
     {
-        if (message.consumer == null) {
+        if (message.getSender() == null)
+        {
             return false;
         }
 
-        message.consumer.accept(value);
-
+        NBTTagCompound cmp = message.getNBTValue();
+        FMLInterModComms.sendRuntimeMessage(modOwnerID, message.getSender(), cmp.getString("replyKey"), value);
         return true;
     }
 
-    private void faultyMessage(InterModComms.IMCMessage message, Class expectedType)
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, NBTTagCompound value)
     {
-        logger.error("Got message with key '" + message.getMethod() + "' of type '" + message.getMessageSupplier().get() + "'; Expected type: '" + expectedType.getName() + "'");
+        if (message.getSender() == null)
+        {
+            return false;
+        }
+
+        NBTTagCompound cmp = message.getNBTValue();
+        FMLInterModComms.sendRuntimeMessage(modOwnerID, message.getSender(), cmp.getString("replyKey"), value);
+        return true;
+    }
+
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, ItemStack value)
+    {
+        if (message.getSender() == null)
+        {
+            logger.error("Message error! Could not reply to message with key '" + message.key + "' - No sender found");
+            return false;
+        }
+
+        NBTTagCompound cmp = message.getNBTValue();
+        FMLInterModComms.sendRuntimeMessage(modOwnerID, message.getSender(), cmp.getString("replyKey"), value);
+        return true;
+    }
+
+    private void faultyMessage(FMLInterModComms.IMCMessage message, Class expectedType)
+    {
+        logger.error("Got message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'; Expected type: '" + expectedType.getName() + "'");
     }
 }
 

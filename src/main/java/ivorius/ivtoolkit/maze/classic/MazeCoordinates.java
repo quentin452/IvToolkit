@@ -16,34 +16,34 @@
 
 package ivorius.ivtoolkit.maze.classic;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import ivorius.ivtoolkit.blocks.BlockCoord;
 import ivorius.ivtoolkit.math.AxisAlignedTransform2D;
-import net.minecraft.util.math.BlockPos;
 
 /**
  * Created by lukas on 13.04.15.
  */
 public class MazeCoordinates
 {
-    private static Int2ObjectMap<MazeRoom[]> cachedNeighborRoomsBlueprints = new Int2ObjectOpenHashMap<>();
-    private static Int2ObjectMap<MazePath[]> cachedNeighborPathBlueprints = new Int2ObjectOpenHashMap<>();
+    private static TIntObjectMap<MazeRoom[]> cachedNeighborRoomsBlueprints = new TIntObjectHashMap<>();
+    private static TIntObjectMap<MazePath[]> cachedNeighborPathBlueprints = new TIntObjectHashMap<>();
 
     public static MazeRoom rotatedRoom(MazeRoom room, AxisAlignedTransform2D transform, int[] size)
     {
         int[] roomPosition = room.getCoordinates();
-        BlockPos transformedRoom = transform.apply(new BlockPos(roomPosition[0], roomPosition[1], roomPosition[2]), size);
-        return new MazeRoom(transformedRoom.getX(), transformedRoom.getY(), transformedRoom.getZ());
+        BlockCoord transformedRoom = transform.apply(new BlockCoord(roomPosition[0], roomPosition[1], roomPosition[2]), size);
+        return new MazeRoom(transformedRoom.x, transformedRoom.y, transformedRoom.z);
     }
 
     public static MazePath rotatedPath(MazePath path, AxisAlignedTransform2D transform, int[] size)
     {
         int[] sourceCoords = path.getSourceRoom().getCoordinates();
         int[] destCoords = path.getDestinationRoom().getCoordinates();
-        BlockPos transformedSource = transform.apply(new BlockPos(sourceCoords[0], sourceCoords[1], sourceCoords[2]), size);
-        BlockPos transformedDest = transform.apply(new BlockPos(destCoords[0], destCoords[1], destCoords[2]), size);
+        BlockCoord transformedSource = transform.apply(new BlockCoord(sourceCoords[0], sourceCoords[1], sourceCoords[2]), size);
+        BlockCoord transformedDest = transform.apply(new BlockCoord(destCoords[0], destCoords[1], destCoords[2]), size);
 
-        return MazePath.fromConnection(new MazeRoom(transformedSource.getX(), transformedSource.getY(), transformedSource.getZ()), new MazeRoom(transformedDest.getX(), transformedDest.getY(), transformedDest.getZ()));
+        return MazePath.fromConnection(new MazeRoom(transformedSource.x, transformedSource.y, transformedSource.z), new MazeRoom(transformedDest.x, transformedDest.y, transformedDest.z));
     }
 
     public static boolean[] coordPathFlags(MazeCoordinate coordinate)

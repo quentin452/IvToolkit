@@ -18,7 +18,7 @@ package ivorius.ivtoolkit.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,13 +48,13 @@ public class GuiSliderMultivalue extends GuiButton
     }
 
     @Override
-    protected void renderBg(Minecraft mc, int mouseX, int mouseY)
+    protected void mouseDragged(Minecraft mc, int x, int y) // Is actually some kind of draw method
     {
         if (this.visible)
         {
             if (this.mousePressedInsideIndex >= 0)
             {
-                values[mousePressedInsideIndex] = (float) (x - (this.x + 4)) / (float) (this.width - 8);
+                values[mousePressedInsideIndex] = (float) (x - (this.xPosition + 4)) / (float) (this.width - 8);
                 values[mousePressedInsideIndex] = (values[mousePressedInsideIndex]) * (maxValue - minValue) + minValue;
 
                 if (values[mousePressedInsideIndex] < minValue)
@@ -70,48 +70,63 @@ public class GuiSliderMultivalue extends GuiButton
                 notifyOfChanges();
             }
 
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
             for (float value : values)
             {
                 float drawVal = (value - this.minValue) / (this.maxValue - this.minValue);
-                this.drawTexturedModalRect(this.x + (int) (drawVal * (float) (this.width - 8)), this.y, 0, 66, 4, height);
-                this.drawTexturedModalRect(this.x + (int) (drawVal * (float) (this.width - 8)) + 4, this.y, 196, 66, 4, height);
+                this.drawTexturedModalRect(this.xPosition + (int) (drawVal * (float) (this.width - 8)), this.yPosition, 0, 66, 4, height);
+                this.drawTexturedModalRect(this.xPosition + (int) (drawVal * (float) (this.width - 8)) + 4, this.yPosition, 196, 66, 4, height);
             }
         }
     }
 
     @Override
-    protected void onDrag(double mouseX, double mouseY, double mouseDX, double mouseDY)
+    public boolean mousePressed(Minecraft mc, int x, int y)
     {
-        float value = (float) (x - (this.x + 4)) / (float) (this.width - 8);
-        value = value * (maxValue - minValue) + minValue;
-
-        float nearestDist = -1;
-        for (int i = 0; i < values.length; i++)
+        if (super.mousePressed(mc, x, y))
         {
-            float dist = Math.abs(values[i] - value);
+            float value = (float) (x - (this.xPosition + 4)) / (float) (this.width - 8);
+            value = value * (maxValue - minValue) + minValue;
 
-            if (dist < nearestDist || nearestDist < 0)
+            float nearestDist = -1;
+            for (int i = 0; i < values.length; i++)
             {
-                mousePressedInsideIndex = i;
-                nearestDist = dist;
+                float dist = Math.abs(values[i] - value);
+
+                if (dist < nearestDist || nearestDist < 0)
+                {
+                    mousePressedInsideIndex = i;
+                    nearestDist = dist;
+                }
             }
+
+            values[mousePressedInsideIndex] = value;
+
+            if (values[mousePressedInsideIndex] < minValue)
+            {
+                values[mousePressedInsideIndex] = minValue;
+            }
+
+            if (values[mousePressedInsideIndex] > maxValue)
+            {
+                values[mousePressedInsideIndex] = maxValue;
+            }
+
+            notifyOfChanges();
+
+            return true;
         }
-
-        values[mousePressedInsideIndex] = value;
-
-        if (values[mousePressedInsideIndex] < minValue)
+        else
         {
-            values[mousePressedInsideIndex] = minValue;
+            return false;
         }
+    }
 
-        if (values[mousePressedInsideIndex] > maxValue)
-        {
-            values[mousePressedInsideIndex] = maxValue;
-        }
-
-        notifyOfChanges();
+    @Override
+    public void mouseReleased(int x, int y)
+    {
+        this.mousePressedInsideIndex = -1;
     }
 
     private void notifyOfChanges()

@@ -16,7 +16,7 @@
 
 package ivorius.ivtoolkit.math;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.MathHelper;
 
 /**
  * Created by lukas on 13.07.14.
@@ -36,7 +36,7 @@ public class IvBytePacker
 
     public static byte[] packValues(int[] values, byte bitLength)
     {
-        byte[] packed = new byte[MathHelper.ceil(values.length * bitLength / 8.0f)];
+        byte[] packed = new byte[MathHelper.ceiling_float_int(values.length * bitLength / 8.0f)];
         int currentArrayIndex = 0;
 
         long currentVal = 0;

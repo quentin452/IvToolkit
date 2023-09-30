@@ -20,9 +20,6 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Created by lukas on 30.06.14.
@@ -32,38 +29,38 @@ public class MCRegistryDefault implements MCRegistry
     public static final MCRegistryDefault INSTANCE = new MCRegistryDefault();
 
     @Override
-    public Item itemFromID(ResourceLocation itemID)
+    public Item itemFromID(String itemID)
     {
-        return ForgeRegistries.ITEMS.getValue(itemID);
+        return (Item) Item.itemRegistry.getObject(itemID);
     }
 
     @Override
-    public ResourceLocation idFromItem(Item item)
+    public String idFromItem(Item item)
     {
-        return ForgeRegistries.ITEMS.getKey(item);
+        return Item.itemRegistry.getNameForObject(item);
     }
 
     @Override
-    public void modifyItemStackCompound(NBTTagCompound compound, ResourceLocation itemID)
+    public void modifyItemStackCompound(NBTTagCompound compound, String itemID)
     {
 
     }
 
     @Override
-    public Block blockFromID(ResourceLocation blockID)
+    public Block blockFromID(String blockID)
     {
-        return ForgeRegistries.BLOCKS.getValue(blockID);
+        return Block.getBlockFromName(blockID);
     }
 
     @Override
-    public ResourceLocation idFromBlock(Block block)
+    public String idFromBlock(Block block)
     {
-        return ForgeRegistries.BLOCKS.getKey(block);
+        return Block.blockRegistry.getNameForObject(block);
     }
 
     @Override
     public TileEntity loadTileEntity(NBTTagCompound compound)
     {
-        return TileEntity.create(compound);
+        return TileEntity.createAndLoadEntity(compound);
     }
 }
