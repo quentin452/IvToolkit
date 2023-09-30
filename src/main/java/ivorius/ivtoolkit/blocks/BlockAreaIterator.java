@@ -1,17 +1,14 @@
 /*
  * Copyright 2014 Lukas Tenbrink
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ivorius.ivtoolkit.blocks;
@@ -21,8 +18,8 @@ import java.util.Iterator;
 /**
  * Created by lukas on 09.06.14.
  */
-public class BlockAreaIterator implements Iterator<BlockCoord>
-{
+public class BlockAreaIterator implements Iterator<BlockCoord> {
+
     private BlockCoord lower;
     private BlockCoord higher;
 
@@ -30,8 +27,7 @@ public class BlockAreaIterator implements Iterator<BlockCoord>
     private int curY;
     private int curZ;
 
-    public BlockAreaIterator(BlockCoord lower, BlockCoord higher)
-    {
+    public BlockAreaIterator(BlockCoord lower, BlockCoord higher) {
         this.lower = lower;
         this.higher = higher;
 
@@ -40,33 +36,28 @@ public class BlockAreaIterator implements Iterator<BlockCoord>
         curZ = lower.z;
     }
 
-    public BlockAreaIterator(BlockArea area)
-    {
+    public BlockAreaIterator(BlockArea area) {
         this(area.getLowerCorner(), area.getHigherCorner());
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return curX <= higher.x && curY <= higher.y && curZ <= higher.z;
     }
 
     @Override
-    public BlockCoord next()
-    {
+    public BlockCoord next() {
         BlockCoord retVal = hasNext() ? new BlockCoord(curX, curY, curZ) : null;
 
-        curX ++;
+        curX++;
 
-        if (curX > higher.x)
-        {
+        if (curX > higher.x) {
             curX = lower.x;
-            curY ++;
+            curY++;
 
-            if (curY > higher.y)
-            {
+            if (curY > higher.y) {
                 curY = lower.y;
-                curZ ++;
+                curZ++;
             }
         }
 
@@ -74,8 +65,7 @@ public class BlockAreaIterator implements Iterator<BlockCoord>
     }
 
     @Override
-    public void remove()
-    {
+    public void remove() {
         throw new UnsupportedOperationException();
     }
 }

@@ -1,31 +1,27 @@
 /*
  * Copyright 2015 Lukas Tenbrink
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ivorius.ivtoolkit.maze.components;
 
-import com.google.common.collect.*;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.*;
+
+import com.google.common.collect.*;
 
 /**
  * Created by lukas on 15.04.15.
  */
-public class ShiftedMazeComponent<M extends MazeComponent<C>, C> implements MazeComponent<C>
-{
+public class ShiftedMazeComponent<M extends MazeComponent<C>, C> implements MazeComponent<C> {
+
     private final M component;
     private final MazeRoom shift;
 
@@ -34,8 +30,8 @@ public class ShiftedMazeComponent<M extends MazeComponent<C>, C> implements Maze
     private final ImmutableMultimap<MazePassage, MazePassage> reachability;
 
     @Deprecated
-    public ShiftedMazeComponent(M component, MazeRoom shift, ImmutableSet<MazeRoom> rooms, ImmutableMap<MazePassage, C> exits)
-    {
+    public ShiftedMazeComponent(M component, MazeRoom shift, ImmutableSet<MazeRoom> rooms,
+        ImmutableMap<MazePassage, C> exits) {
         this.component = component;
         this.shift = shift;
         this.rooms = rooms;
@@ -46,8 +42,8 @@ public class ShiftedMazeComponent<M extends MazeComponent<C>, C> implements Maze
         this.reachability = builder.build();
     }
 
-    public ShiftedMazeComponent(M component, MazeRoom shift, ImmutableSet<MazeRoom> rooms, ImmutableMap<MazePassage, C> exits, ImmutableMultimap<MazePassage, MazePassage> reachability)
-    {
+    public ShiftedMazeComponent(M component, MazeRoom shift, ImmutableSet<MazeRoom> rooms,
+        ImmutableMap<MazePassage, C> exits, ImmutableMultimap<MazePassage, MazePassage> reachability) {
         this.component = component;
         this.shift = shift;
         this.rooms = rooms;
@@ -55,31 +51,26 @@ public class ShiftedMazeComponent<M extends MazeComponent<C>, C> implements Maze
         this.reachability = reachability;
     }
 
-    public M getComponent()
-    {
+    public M getComponent() {
         return component;
     }
 
-    public MazeRoom getShift()
-    {
+    public MazeRoom getShift() {
         return shift;
     }
 
     @Override
-    public Set<MazeRoom> rooms()
-    {
+    public Set<MazeRoom> rooms() {
         return rooms;
     }
 
     @Override
-    public Map<MazePassage, C> exits()
-    {
+    public Map<MazePassage, C> exits() {
         return exits;
     }
 
     @Override
-    public Multimap<MazePassage, MazePassage> reachability()
-    {
+    public Multimap<MazePassage, MazePassage> reachability() {
         return reachability;
     }
 }

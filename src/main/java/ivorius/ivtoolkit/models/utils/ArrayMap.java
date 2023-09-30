@@ -1,14 +1,10 @@
 /*
  * Notice: This is a modified version of a libgdx file. See https://github.com/libgdx/libgdx for the original work.
- *
  * Copyright 2011 See libgdx AUTHORS file.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,25 +14,25 @@
 
 package ivorius.ivtoolkit.models.utils;
 
-import org.apache.commons.lang3.tuple.MutablePair;
+import static java.util.Map.Entry;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import static java.util.Map.Entry;
-
+import org.apache.commons.lang3.tuple.MutablePair;
 
 /**
  * An ordered or unordered map of objects. This implementation uses arrays to store the keys and values, which means
  * {@link #getKey(Object, boolean) gets} do a comparison for each key in the map. This is slower than a typical hash map
- * implementation, but may be acceptable for small maps and has the benefits that keys and values can be accessed by index, which
+ * implementation, but may be acceptable for small maps and has the benefits that keys and values can be accessed by
+ * index, which
  * makes iteration fast. Like List, if ordered is false, * this class avoids a memory copy when removing elements (the
  * last element is moved to the removed element's position).
  *
  * @author Nathan Sweet
  */
-public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
-{
+public class ArrayMap<K, V> implements Iterable<Entry<K, V>> {
+
     public K[] keys;
     public V[] values;
     public int size;
@@ -49,26 +45,24 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * Creates an ordered map with a capacity of 16.
      */
-    public ArrayMap()
-    {
+    public ArrayMap() {
         this(true, 16);
     }
 
     /**
      * Creates an ordered map with the specified capacity.
      */
-    public ArrayMap(int capacity)
-    {
+    public ArrayMap(int capacity) {
         this(true, capacity);
     }
 
     /**
-     * @param ordered  If false, methods that remove elements may change the order of other elements in the arrays, which avoids a
+     * @param ordered  If false, methods that remove elements may change the order of other elements in the arrays,
+     *                 which avoids a
      *                 memory copy.
      * @param capacity Any elements added beyond this will cause the backing arrays to be grown.
      */
-    public ArrayMap(boolean ordered, int capacity)
-    {
+    public ArrayMap(boolean ordered, int capacity) {
         this.ordered = ordered;
         keys = (K[]) new Object[capacity];
         values = (V[]) new Object[capacity];
@@ -77,12 +71,12 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * Creates a new map with {@link #keys} and {@link #values} of the specified type.
      *
-     * @param ordered  If false, methods that remove elements may change the order of other elements in the arrays, which avoids a
+     * @param ordered  If false, methods that remove elements may change the order of other elements in the arrays,
+     *                 which avoids a
      *                 memory copy.
      * @param capacity Any elements added beyond this will cause the backing arrays to be grown.
      */
-    public ArrayMap(boolean ordered, int capacity, Class keyArrayType, Class valueArrayType)
-    {
+    public ArrayMap(boolean ordered, int capacity, Class keyArrayType, Class valueArrayType) {
         this.ordered = ordered;
         keys = (K[]) ArrayReflection.newInstance(keyArrayType, capacity);
         values = (V[]) ArrayReflection.newInstance(valueArrayType, capacity);
@@ -91,26 +85,31 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * Creates an ordered map with {@link #keys} and {@link #values} of the specified type and a capacity of 16.
      */
-    public ArrayMap(Class keyArrayType, Class valueArrayType)
-    {
+    public ArrayMap(Class keyArrayType, Class valueArrayType) {
         this(false, 16, keyArrayType, valueArrayType);
     }
 
     /**
-     * Creates a new map containing the elements in the specified map. The new map will have the same type of backing arrays and
-     * will be ordered if the specified map is ordered. The capacity is set to the number of elements, so any subsequent elements
+     * Creates a new map containing the elements in the specified map. The new map will have the same type of backing
+     * arrays and
+     * will be ordered if the specified map is ordered. The capacity is set to the number of elements, so any subsequent
+     * elements
      * added will cause the backing arrays to be grown.
      */
-    public ArrayMap(ArrayMap array)
-    {
-        this(array.ordered, array.size, array.keys.getClass().getComponentType(), array.values.getClass().getComponentType());
+    public ArrayMap(ArrayMap array) {
+        this(
+            array.ordered,
+            array.size,
+            array.keys.getClass()
+                .getComponentType(),
+            array.values.getClass()
+                .getComponentType());
         size = array.size;
         System.arraycopy(array.keys, 0, keys, 0, size);
         System.arraycopy(array.values, 0, values, 0, size);
     }
 
-    public void put(K key, V value)
-    {
+    public void put(K key, V value) {
         if (size == keys.length) resize(Math.max(8, (int) (size * 1.75f)));
         int index = indexOfKey(key);
         if (index == -1) index = size++;
@@ -118,8 +117,7 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         values[index] = value;
     }
 
-    public void put(K key, V value, int index)
-    {
+    public void put(K key, V value, int index) {
         if (size == keys.length) resize(Math.max(8, (int) (size * 1.75f)));
         int existingIndex = indexOfKey(key);
         if (existingIndex != -1) removeIndex(existingIndex);
@@ -130,15 +128,13 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         size++;
     }
 
-    public void putAll(ArrayMap map)
-    {
+    public void putAll(ArrayMap map) {
         putAll(map, 0, map.size);
     }
 
-    public void putAll(ArrayMap map, int offset, int length)
-    {
-        if (offset + length > map.size)
-            throw new IllegalArgumentException("offset + length must be <= size: " + offset + " + " + length + " <= " + map.size);
+    public void putAll(ArrayMap map, int offset, int length) {
+        if (offset + length > map.size) throw new IllegalArgumentException(
+            "offset + length must be <= size: " + offset + " + " + length + " <= " + map.size);
         int sizeNeeded = size + length - offset;
         if (sizeNeeded >= keys.length) resize(Math.max(8, (int) (sizeNeeded * 1.75f)));
         System.arraycopy(map.keys, offset, keys, size, length);
@@ -147,96 +143,76 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     }
 
     /**
-     * Returns the value for the specified key. Note this does a .equals() comparison of each key in reverse order until the
+     * Returns the value for the specified key. Note this does a .equals() comparison of each key in reverse order until
+     * the
      * specified key is found.
      */
-    public V get(K key)
-    {
+    public V get(K key) {
         Object[] keys = this.keys;
         int i = size - 1;
-        if (key == null)
-        {
-            for (; i >= 0; i--)
-                if (keys[i] == key) return values[i];
-        }
-        else
-        {
-            for (; i >= 0; i--)
-                if (key.equals(keys[i])) return values[i];
+        if (key == null) {
+            for (; i >= 0; i--) if (keys[i] == key) return values[i];
+        } else {
+            for (; i >= 0; i--) if (key.equals(keys[i])) return values[i];
         }
         return null;
     }
 
     /**
-     * Returns the key for the specified value. Note this does a comparison of each value in reverse order until the specified
+     * Returns the key for the specified value. Note this does a comparison of each value in reverse order until the
+     * specified
      * value is found.
      *
      * @param identity If true, == comparison will be used. If false, .equals() comparison will be used.
      */
-    public K getKey(V value, boolean identity)
-    {
+    public K getKey(V value, boolean identity) {
         Object[] values = this.values;
         int i = size - 1;
-        if (identity || value == null)
-        {
-            for (; i >= 0; i--)
-                if (values[i] == value) return keys[i];
-        }
-        else
-        {
-            for (; i >= 0; i--)
-                if (value.equals(values[i])) return keys[i];
+        if (identity || value == null) {
+            for (; i >= 0; i--) if (values[i] == value) return keys[i];
+        } else {
+            for (; i >= 0; i--) if (value.equals(values[i])) return keys[i];
         }
         return null;
     }
 
-    public K getKeyAt(int index)
-    {
+    public K getKeyAt(int index) {
         if (index >= size) throw new IndexOutOfBoundsException(String.valueOf(index));
         return keys[index];
     }
 
-    public V getValueAt(int index)
-    {
+    public V getValueAt(int index) {
         if (index >= size) throw new IndexOutOfBoundsException(String.valueOf(index));
         return values[index];
     }
 
-    public K firstKey()
-    {
+    public K firstKey() {
         if (size == 0) throw new IllegalStateException("Map is empty.");
         return keys[0];
     }
 
-    public V firstValue()
-    {
+    public V firstValue() {
         if (size == 0) throw new IllegalStateException("Map is empty.");
         return values[0];
     }
 
-    public void setKey(int index, K key)
-    {
+    public void setKey(int index, K key) {
         if (index >= size) throw new IndexOutOfBoundsException(String.valueOf(index));
         keys[index] = key;
     }
 
-    public void setValue(int index, V value)
-    {
+    public void setValue(int index, V value) {
         if (index >= size) throw new IndexOutOfBoundsException(String.valueOf(index));
         values[index] = value;
     }
 
-    public void insert(int index, K key, V value)
-    {
+    public void insert(int index, K key, V value) {
         if (index > size) throw new IndexOutOfBoundsException(String.valueOf(index));
         if (size == keys.length) resize(Math.max(8, (int) (size * 1.75f)));
-        if (ordered)
-        {
+        if (ordered) {
             System.arraycopy(keys, index, keys, index + 1, size - index);
             System.arraycopy(values, index, values, index + 1, size - index);
-        }
-        else
-        {
+        } else {
             keys[size] = keys[index];
             values[size] = values[index];
         }
@@ -245,19 +221,13 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         values[index] = value;
     }
 
-    public boolean containsKey(K key)
-    {
+    public boolean containsKey(K key) {
         K[] keys = this.keys;
         int i = size - 1;
-        if (key == null)
-        {
-            while (i >= 0)
-                if (keys[i--] == key) return true;
-        }
-        else
-        {
-            while (i >= 0)
-                if (key.equals(keys[i--])) return true;
+        if (key == null) {
+            while (i >= 0) if (keys[i--] == key) return true;
+        } else {
+            while (i >= 0) if (key.equals(keys[i--])) return true;
         }
         return false;
     }
@@ -265,76 +235,50 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * @param identity If true, == comparison will be used. If false, .equals() comparison will be used.
      */
-    public boolean containsValue(V value, boolean identity)
-    {
+    public boolean containsValue(V value, boolean identity) {
         V[] values = this.values;
         int i = size - 1;
-        if (identity || value == null)
-        {
-            while (i >= 0)
-                if (values[i--] == value) return true;
-        }
-        else
-        {
-            while (i >= 0)
-                if (value.equals(values[i--])) return true;
+        if (identity || value == null) {
+            while (i >= 0) if (values[i--] == value) return true;
+        } else {
+            while (i >= 0) if (value.equals(values[i--])) return true;
         }
         return false;
     }
 
-    public int indexOfKey(K key)
-    {
+    public int indexOfKey(K key) {
         Object[] keys = this.keys;
-        if (key == null)
-        {
-            for (int i = 0, n = size; i < n; i++)
-                if (keys[i] == key) return i;
-        }
-        else
-        {
-            for (int i = 0, n = size; i < n; i++)
-                if (key.equals(keys[i])) return i;
+        if (key == null) {
+            for (int i = 0, n = size; i < n; i++) if (keys[i] == key) return i;
+        } else {
+            for (int i = 0, n = size; i < n; i++) if (key.equals(keys[i])) return i;
         }
         return -1;
     }
 
-    public int indexOfValue(V value, boolean identity)
-    {
+    public int indexOfValue(V value, boolean identity) {
         Object[] values = this.values;
-        if (identity || value == null)
-        {
-            for (int i = 0, n = size; i < n; i++)
-                if (values[i] == value) return i;
-        }
-        else
-        {
-            for (int i = 0, n = size; i < n; i++)
-                if (value.equals(values[i])) return i;
+        if (identity || value == null) {
+            for (int i = 0, n = size; i < n; i++) if (values[i] == value) return i;
+        } else {
+            for (int i = 0, n = size; i < n; i++) if (value.equals(values[i])) return i;
         }
         return -1;
     }
 
-    public V removeKey(K key)
-    {
+    public V removeKey(K key) {
         Object[] keys = this.keys;
-        if (key == null)
-        {
-            for (int i = 0, n = size; i < n; i++)
-            {
-                if (keys[i] == key)
-                {
+        if (key == null) {
+            for (int i = 0, n = size; i < n; i++) {
+                if (keys[i] == key) {
                     V value = values[i];
                     removeIndex(i);
                     return value;
                 }
             }
-        }
-        else
-        {
-            for (int i = 0, n = size; i < n; i++)
-            {
-                if (key.equals(keys[i]))
-                {
+        } else {
+            for (int i = 0, n = size; i < n; i++) {
+                if (key.equals(keys[i])) {
                     V value = values[i];
                     removeIndex(i);
                     return value;
@@ -344,26 +288,18 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         return null;
     }
 
-    public boolean removeValue(V value, boolean identity)
-    {
+    public boolean removeValue(V value, boolean identity) {
         Object[] values = this.values;
-        if (identity || value == null)
-        {
-            for (int i = 0, n = size; i < n; i++)
-            {
-                if (values[i] == value)
-                {
+        if (identity || value == null) {
+            for (int i = 0, n = size; i < n; i++) {
+                if (values[i] == value) {
                     removeIndex(i);
                     return true;
                 }
             }
-        }
-        else
-        {
-            for (int i = 0, n = size; i < n; i++)
-            {
-                if (value.equals(values[i]))
-                {
+        } else {
+            for (int i = 0, n = size; i < n; i++) {
+                if (value.equals(values[i])) {
                     removeIndex(i);
                     return true;
                 }
@@ -375,18 +311,14 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * Removes and returns the key/values pair at the specified index.
      */
-    public void removeIndex(int index)
-    {
+    public void removeIndex(int index) {
         if (index >= size) throw new IndexOutOfBoundsException(String.valueOf(index));
         Object[] keys = this.keys;
         size--;
-        if (ordered)
-        {
+        if (ordered) {
             System.arraycopy(keys, index + 1, keys, index, size - index);
             System.arraycopy(values, index + 1, values, index, size - index);
-        }
-        else
-        {
+        } else {
             keys[index] = keys[size];
             values[index] = values[size];
         }
@@ -397,26 +329,22 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     /**
      * Returns the last key.
      */
-    public K peekKey()
-    {
+    public K peekKey() {
         return keys[size - 1];
     }
 
     /**
      * Returns the last value.
      */
-    public V peekValue()
-    {
+    public V peekValue() {
         return values[size - 1];
     }
 
     /**
      * Clears the map and reduces the size of the backing arrays to be the specified capacity if they are larger.
      */
-    public void clear(int maximumCapacity)
-    {
-        if (keys.length <= maximumCapacity)
-        {
+    public void clear(int maximumCapacity) {
+        if (keys.length <= maximumCapacity) {
             clear();
             return;
         }
@@ -424,12 +352,10 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         resize(maximumCapacity);
     }
 
-    public void clear()
-    {
+    public void clear() {
         K[] keys = this.keys;
         V[] values = this.values;
-        for (int i = 0, n = size; i < n; i++)
-        {
+        for (int i = 0, n = size; i < n; i++) {
             keys[i] = null;
             values[i] = null;
         }
@@ -437,40 +363,43 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     }
 
     /**
-     * Reduces the size of the backing arrays to the size of the actual number of entries. This is useful to release memory when
+     * Reduces the size of the backing arrays to the size of the actual number of entries. This is useful to release
+     * memory when
      * many items have been removed, or if it is known that more entries will not be added.
      */
-    public void shrink()
-    {
+    public void shrink() {
         if (keys.length == size) return;
         resize(size);
     }
 
     /**
-     * Increases the size of the backing arrays to accommodate the specified number of additional entries. Useful before adding
+     * Increases the size of the backing arrays to accommodate the specified number of additional entries. Useful before
+     * adding
      * many entries to avoid multiple backing array resizes.
      */
-    public void ensureCapacity(int additionalCapacity)
-    {
+    public void ensureCapacity(int additionalCapacity) {
         int sizeNeeded = size + additionalCapacity;
         if (sizeNeeded >= keys.length) resize(Math.max(8, sizeNeeded));
     }
 
-    protected void resize(int newSize)
-    {
-        K[] newKeys = (K[]) ArrayReflection.newInstance(keys.getClass().getComponentType(), newSize);
+    protected void resize(int newSize) {
+        K[] newKeys = (K[]) ArrayReflection.newInstance(
+            keys.getClass()
+                .getComponentType(),
+            newSize);
         System.arraycopy(keys, 0, newKeys, 0, Math.min(size, newKeys.length));
         this.keys = newKeys;
 
-        V[] newValues = (V[]) ArrayReflection.newInstance(values.getClass().getComponentType(), newSize);
+        V[] newValues = (V[]) ArrayReflection.newInstance(
+            values.getClass()
+                .getComponentType(),
+            newSize);
         System.arraycopy(values, 0, newValues, 0, Math.min(size, newValues.length));
         this.values = newValues;
     }
 
-    public void reverse()
-    {
-        for (int i = 0, lastIndex = size - 1, n = size / 2; i < n; i++)
-        {
+    public void reverse() {
+        for (int i = 0, lastIndex = size - 1, n = size / 2; i < n; i++) {
             int ii = lastIndex - i;
             K tempKey = keys[i];
             keys[i] = keys[ii];
@@ -482,36 +411,34 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         }
     }
 
-//	public void shuffle () {
-//		for (int i = size - 1; i >= 0; i--) {
-//			int ii = MathUtils.random(i);
-//			K tempKey = keys[i];
-//			keys[i] = keys[ii];
-//			keys[ii] = tempKey;
-//
-//			V tempValue = values[i];
-//			values[i] = values[ii];
-//			values[ii] = tempValue;
-//		}
-//	}
+    // public void shuffle () {
+    // for (int i = size - 1; i >= 0; i--) {
+    // int ii = MathUtils.random(i);
+    // K tempKey = keys[i];
+    // keys[i] = keys[ii];
+    // keys[ii] = tempKey;
+    //
+    // V tempValue = values[i];
+    // values[i] = values[ii];
+    // values[ii] = tempValue;
+    // }
+    // }
 
     /**
-     * Reduces the size of the arrays to the specified size. If the arrays are already smaller than the specified size, no action
+     * Reduces the size of the arrays to the specified size. If the arrays are already smaller than the specified size,
+     * no action
      * is taken.
      */
-    public void truncate(int newSize)
-    {
+    public void truncate(int newSize) {
         if (size <= newSize) return;
-        for (int i = newSize; i < size; i++)
-        {
+        for (int i = newSize; i < size; i++) {
             keys[i] = null;
             values[i] = null;
         }
         size = newSize;
     }
 
-    public String toString()
-    {
+    public String toString() {
         if (size == 0) return "{}";
         K[] keys = this.keys;
         V[] values = this.values;
@@ -520,8 +447,7 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         buffer.append(keys[0]);
         buffer.append('=');
         buffer.append(values[0]);
-        for (int i = 1; i < size; i++)
-        {
+        for (int i = 1; i < size; i++) {
             buffer.append(", ");
             buffer.append(keys[i]);
             buffer.append('=');
@@ -531,24 +457,22 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         return buffer.toString();
     }
 
-    public Iterator<Entry<K, V>> iterator()
-    {
+    public Iterator<Entry<K, V>> iterator() {
         return entries();
     }
 
     /**
-     * Returns an iterator for the entries in the map. Remove is supported. Note that the same iterator instance is returned each
-     * time this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for nested or multithreaded iteration.
+     * Returns an iterator for the entries in the map. Remove is supported. Note that the same iterator instance is
+     * returned each
+     * time this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for
+     * nested or multithreaded iteration.
      */
-    public Entries<K, V> entries()
-    {
-        if (entries1 == null)
-        {
+    public Entries<K, V> entries() {
+        if (entries1 == null) {
             entries1 = new Entries(this);
             entries2 = new Entries(this);
         }
-        if (!entries1.valid)
-        {
+        if (!entries1.valid) {
             entries1.index = 0;
             entries1.valid = true;
             entries2.valid = false;
@@ -561,18 +485,17 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     }
 
     /**
-     * Returns an iterator for the values in the map. Remove is supported. Note that the same iterator instance is returned each
-     * time this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for nested or multithreaded iteration.
+     * Returns an iterator for the values in the map. Remove is supported. Note that the same iterator instance is
+     * returned each
+     * time this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for
+     * nested or multithreaded iteration.
      */
-    public Values<V> values()
-    {
-        if (valuesIter1 == null)
-        {
+    public Values<V> values() {
+        if (valuesIter1 == null) {
             valuesIter1 = new Values(this);
             valuesIter2 = new Values(this);
         }
-        if (!valuesIter1.valid)
-        {
+        if (!valuesIter1.valid) {
             valuesIter1.index = 0;
             valuesIter1.valid = true;
             valuesIter2.valid = false;
@@ -585,18 +508,17 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
     }
 
     /**
-     * Returns an iterator for the keys in the map. Remove is supported. Note that the same iterator instance is returned each time
-     * this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for nested or multithreaded iteration.
+     * Returns an iterator for the keys in the map. Remove is supported. Note that the same iterator instance is
+     * returned each time
+     * this method is called. Use the {@link ivorius.ivtoolkit.models.utils.ArrayMap.Entries} constructor for nested or
+     * multithreaded iteration.
      */
-    public Keys<K> keys()
-    {
-        if (keysIter1 == null)
-        {
+    public Keys<K> keys() {
+        if (keysIter1 == null) {
             keysIter1 = new Keys(this);
             keysIter2 = new Keys(this);
         }
-        if (!keysIter1.valid)
-        {
+        if (!keysIter1.valid) {
             keysIter1.index = 0;
             keysIter1.valid = true;
             keysIter2.valid = false;
@@ -608,34 +530,30 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
         return keysIter2;
     }
 
-    static public class Entries<K, V> implements Iterable<Entry<K, V>>, Iterator<Entry<K, V>>
-    {
+    static public class Entries<K, V> implements Iterable<Entry<K, V>>, Iterator<Entry<K, V>> {
+
         private final ArrayMap<K, V> map;
         MutablePair<K, V> entry = new MutablePair<>();
         int index;
         boolean valid = true;
 
-        public Entries(ArrayMap<K, V> map)
-        {
+        public Entries(ArrayMap<K, V> map) {
             this.map = map;
         }
 
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             return index < map.size;
         }
 
-        public Iterator<Entry<K, V>> iterator()
-        {
+        public Iterator<Entry<K, V>> iterator() {
             return this;
         }
 
         /**
          * Note the same entry instance is returned each time this method is called.
          */
-        public Entry<K, V> next()
-        {
+        public Entry<K, V> next() {
             if (index >= map.size) throw new NoSuchElementException(String.valueOf(index));
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             entry.left = map.keys[index];
@@ -643,115 +561,101 @@ public class ArrayMap<K, V> implements Iterable<Entry<K, V>>
             return entry;
         }
 
-        public void remove()
-        {
+        public void remove() {
             index--;
             map.removeIndex(index);
         }
 
-        public void reset()
-        {
+        public void reset() {
             index = 0;
         }
     }
 
-    static public class Values<V> implements Iterable<V>, Iterator<V>
-    {
+    static public class Values<V> implements Iterable<V>, Iterator<V> {
+
         private final ArrayMap<Object, V> map;
         int index;
         boolean valid = true;
 
-        public Values(ArrayMap<Object, V> map)
-        {
+        public Values(ArrayMap<Object, V> map) {
             this.map = map;
         }
 
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             return index < map.size;
         }
 
-        public Iterator<V> iterator()
-        {
+        public Iterator<V> iterator() {
             return this;
         }
 
-        public V next()
-        {
+        public V next() {
             if (index >= map.size) throw new NoSuchElementException(String.valueOf(index));
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             return map.values[index++];
         }
 
-        public void remove()
-        {
+        public void remove() {
             index--;
             map.removeIndex(index);
         }
 
-        public void reset()
-        {
+        public void reset() {
             index = 0;
         }
 
-//		public Array<V> toArray () {
-//			return new Array(true, map.values, index, map.size - index);
-//		}
-//
-//		public Array<V> toArray (Array array) {
-//			array.addAll(map.values, index, map.size - index);
-//			return array;
-//		}
+        // public Array<V> toArray () {
+        // return new Array(true, map.values, index, map.size - index);
+        // }
+        //
+        // public Array<V> toArray (Array array) {
+        // array.addAll(map.values, index, map.size - index);
+        // return array;
+        // }
     }
 
-    static public class Keys<K> implements Iterable<K>, Iterator<K>
-    {
+    static public class Keys<K> implements Iterable<K>, Iterator<K> {
+
         private final ArrayMap<K, Object> map;
         int index;
         boolean valid = true;
 
-        public Keys(ArrayMap<K, Object> map)
-        {
+        public Keys(ArrayMap<K, Object> map) {
             this.map = map;
         }
 
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             return index < map.size;
         }
 
-        public Iterator<K> iterator()
-        {
+        public Iterator<K> iterator() {
             return this;
         }
 
-        public K next()
-        {
+        public K next() {
             if (index >= map.size) throw new NoSuchElementException(String.valueOf(index));
             if (!valid) throw new RuntimeException("#iterator() cannot be used nested.");
             return map.keys[index++];
         }
 
-        public void remove()
-        {
+        public void remove() {
             index--;
             map.removeIndex(index);
         }
 
-        public void reset()
-        {
+        public void reset() {
             index = 0;
         }
 
-//		public Array<K> toArray () {
-//			return new Array(true, map.keys, index, map.size - index);
-//		}
-//
-//		public Array<K> toArray (Array array) {
-//			array.addAll(map.keys, index, map.size - index);
-//			return array;
-//		}
+        // public Array<K> toArray () {
+        // return new Array(true, map.keys, index, map.size - index);
+        // }
+        //
+        // public Array<K> toArray (Array array) {
+        // array.addAll(map.keys, index, map.size - index);
+        // return array;
+        // }
     }
 }

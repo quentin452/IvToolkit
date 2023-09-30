@@ -1,14 +1,10 @@
 /*
  * Notice: This is a modified version of a libgdx file. See https://github.com/libgdx/libgdx for the original work.
- *
  * Copyright 2011 See libgdx AUTHORS file.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +14,20 @@
 
 package ivorius.ivtoolkit.models;
 
-import ivorius.ivtoolkit.models.utils.MatrixMathUtils;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Quaternion;
 import org.lwjgl.util.vector.Vector3f;
 
-import java.util.ArrayList;
-import java.util.List;
+import ivorius.ivtoolkit.models.utils.MatrixMathUtils;
 
 /**
  * Created by lukas on 21.09.14.
  */
-public class Node
-{
+public class Node {
+
     /**
      * the id, may be null, FIXME is this unique? *
      */
@@ -71,16 +68,13 @@ public class Node
 
     public List<NodePart> parts = new ArrayList<>(2);
 
-    public void calculateLocalTransform()
-    {
+    public void calculateLocalTransform() {
         MatrixMathUtils.setTRS(localTransform, translation, rotation, scale);
     }
 
-    public void calculateGlobalTransform()
-    {
+    public void calculateGlobalTransform() {
         globalTransform.load(localTransform);
-        if (parent != null)
-            Matrix4f.mul(parent.globalTransform, globalTransform, globalTransform);
+        if (parent != null) Matrix4f.mul(parent.globalTransform, globalTransform, globalTransform);
     }
 
     /**
@@ -88,35 +82,27 @@ public class Node
      *
      * @param recursive whether to calculate the local/world transforms for children.
      */
-    public void calculateTransforms(boolean recursive)
-    {
+    public void calculateTransforms(boolean recursive) {
         calculateLocalTransform();
         calculateGlobalTransform();
 
-        if (recursive)
-        {
-            for (Node child : children)
-                child.calculateTransforms(true);
+        if (recursive) {
+            for (Node child : children) child.calculateTransforms(true);
         }
     }
 
-    public void calculateBoneTransforms(boolean recursive)
-    {
-        for (final NodePart part : parts)
-        {
-            if (part.invBoneBindTransforms == null || part.bones == null || part.invBoneBindTransforms.size != part.bones.length)
-                continue;
+    public void calculateBoneTransforms(boolean recursive) {
+        for (final NodePart part : parts) {
+            if (part.invBoneBindTransforms == null || part.bones == null
+                || part.invBoneBindTransforms.size != part.bones.length) continue;
             final int n = part.invBoneBindTransforms.size;
-            for (int i = 0; i < n; i++)
-            {
+            for (int i = 0; i < n; i++) {
                 part.bones[i].load(part.invBoneBindTransforms.keys[i].globalTransform);
                 Matrix4f.mul(part.bones[i], part.invBoneBindTransforms.values[i], part.bones[i]);
             }
         }
-        if (recursive)
-        {
-            for (Node child : children)
-                child.calculateBoneTransforms(true);
+        if (recursive) {
+            for (Node child : children) child.calculateBoneTransforms(true);
         }
     }
 }

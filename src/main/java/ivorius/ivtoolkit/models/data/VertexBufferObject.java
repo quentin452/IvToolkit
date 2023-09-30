@@ -1,14 +1,10 @@
 /*
  * Notice: This is a modified version of a libgdx file. See https://github.com/libgdx/libgdx for the original work.
- *
  * Copyright 2011 See libgdx AUTHORS file.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +14,14 @@
 
 package ivorius.ivtoolkit.models.data;
 
-import ivorius.ivtoolkit.models.utils.BufferUtils;
-import net.minecraft.client.renderer.GLAllocation;
-import org.lwjgl.opengl.GL15;
-
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+
+import net.minecraft.client.renderer.GLAllocation;
+
+import org.lwjgl.opengl.GL15;
+
+import ivorius.ivtoolkit.models.utils.BufferUtils;
 
 /**
  * <p>
@@ -31,12 +29,14 @@ import java.nio.FloatBuffer;
  * </p>
  * <p/>
  * <p>
- * If the OpenGL ES context was lost you can call {@link #invalidate()} to recreate a new OpenGL vertex buffer object. This class
+ * If the OpenGL ES context was lost you can call {@link #invalidate()} to recreate a new OpenGL vertex buffer object.
+ * This class
  * can be used seamlessly with OpenGL ES 1.x and 2.0.
  * </p>
  * <p/>
  * <p>
- * In case OpenGL ES 2.0 is used in the application the data is bound via glVertexAttribPointer() according to the attribute
+ * In case OpenGL ES 2.0 is used in the application the data is bound via glVertexAttribPointer() according to the
+ * attribute
  * aliases specified via {@link VertexAttributes} in the constructor.
  * </p>
  * <p/>
@@ -50,8 +50,8 @@ import java.nio.FloatBuffer;
  *
  * @author mzechner, Dave Clayton <contact@redskyforge.com>
  */
-public class VertexBufferObject implements VertexData
-{
+public class VertexBufferObject implements VertexData {
+
     final VertexAttributes attributes;
     final FloatBuffer buffer;
     final ByteBuffer byteBuffer;
@@ -68,8 +68,7 @@ public class VertexBufferObject implements VertexData
      * @param numVertices the maximum number of vertices
      * @param attributes  the {@link VertexAttribute}s.
      */
-    public VertexBufferObject(boolean isStatic, int numVertices, VertexAttribute... attributes)
-    {
+    public VertexBufferObject(boolean isStatic, int numVertices, VertexAttribute... attributes) {
         this(isStatic, numVertices, new VertexAttributes(attributes));
     }
 
@@ -80,8 +79,7 @@ public class VertexBufferObject implements VertexData
      * @param numVertices the maximum number of vertices
      * @param attributes  the {@link VertexAttributes}.
      */
-    public VertexBufferObject(boolean isStatic, int numVertices, VertexAttributes attributes)
-    {
+    public VertexBufferObject(boolean isStatic, int numVertices, VertexAttributes attributes) {
         this.isStatic = isStatic;
         this.attributes = attributes;
 
@@ -93,48 +91,40 @@ public class VertexBufferObject implements VertexData
         usage = isStatic ? GL15.GL_STATIC_DRAW : GL15.GL_DYNAMIC_DRAW;
     }
 
-    private int createBufferObject()
-    {
+    private int createBufferObject() {
         return GL15.glGenBuffers();
     }
 
     @Override
-    public VertexAttributes getAttributes()
-    {
+    public VertexAttributes getAttributes() {
         return attributes;
     }
 
     @Override
-    public int getNumVertices()
-    {
+    public int getNumVertices() {
         return buffer.limit() * 4 / attributes.vertexSize;
     }
 
     @Override
-    public int getNumMaxVertices()
-    {
+    public int getNumMaxVertices() {
         return byteBuffer.capacity() / attributes.vertexSize;
     }
 
     @Override
-    public FloatBuffer getBuffer()
-    {
+    public FloatBuffer getBuffer() {
         isDirty = true;
         return buffer;
     }
 
-    private void bufferChanged()
-    {
-        if (isBound)
-        {
+    private void bufferChanged() {
+        if (isBound) {
             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, byteBuffer, usage);
             isDirty = false;
         }
     }
 
     @Override
-    public void setVertices(float[] vertices, int offset, int count)
-    {
+    public void setVertices(float[] vertices, int offset, int count) {
         isDirty = true;
         BufferUtils.copy(vertices, byteBuffer, count, offset);
         buffer.position(0);
@@ -143,8 +133,7 @@ public class VertexBufferObject implements VertexData
     }
 
     @Override
-    public void updateVertices(int targetOffset, float[] vertices, int sourceOffset, int count)
-    {
+    public void updateVertices(int targetOffset, float[] vertices, int sourceOffset, int count) {
         isDirty = true;
         final int pos = byteBuffer.position();
         byteBuffer.position(targetOffset * 4);
@@ -157,8 +146,7 @@ public class VertexBufferObject implements VertexData
     /**
      * Invalidates the VertexBufferObject so a new OpenGL buffer handle is created. Use this in case of a context loss.
      */
-    public void invalidate()
-    {
+    public void invalidate() {
         bufferHandle = createBufferObject();
         isDirty = true;
     }
@@ -167,12 +155,10 @@ public class VertexBufferObject implements VertexData
      * Disposes of all resources this VertexBufferObject uses.
      */
     @Override
-    public void dispose()
-    {
+    public void dispose() {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 
-        if (bufferHandle > 0)
-            GL15.glDeleteBuffers(bufferHandle);
+        if (bufferHandle > 0) GL15.glDeleteBuffers(bufferHandle);
         bufferHandle = 0;
     }
 }

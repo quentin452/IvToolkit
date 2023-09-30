@@ -1,109 +1,102 @@
 /*
  * Copyright 2014 Lukas Tenbrink
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ivorius.ivtoolkit.tools;
 
-import cpw.mods.fml.common.event.FMLInterModComms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+
 import org.apache.logging.log4j.Logger;
+
+import cpw.mods.fml.common.event.FMLInterModComms;
 
 /**
  * Created by lukas on 07.06.14.
  */
-public abstract class IvFMLIntercommHandler
-{
+public abstract class IvFMLIntercommHandler {
+
     private Logger logger;
     private String modOwnerID;
     private Object modInstance;
 
-    protected IvFMLIntercommHandler(Logger logger, String modOwnerID, Object modInstance)
-    {
+    protected IvFMLIntercommHandler(Logger logger, String modOwnerID, Object modInstance) {
         this.logger = logger;
         this.modOwnerID = modOwnerID;
         this.modInstance = modInstance;
     }
 
-    public Logger getLogger()
-    {
+    public Logger getLogger() {
         return logger;
     }
 
-    public void setLogger(Logger logger)
-    {
+    public void setLogger(Logger logger) {
         this.logger = logger;
     }
 
-    public String getModOwnerID()
-    {
+    public String getModOwnerID() {
         return modOwnerID;
     }
 
-    public void setModOwnerID(String modOwnerID)
-    {
+    public void setModOwnerID(String modOwnerID) {
         this.modOwnerID = modOwnerID;
     }
 
-    public Object getModInstance()
-    {
+    public Object getModInstance() {
         return modInstance;
     }
 
-    public void setModInstance(Object modInstance)
-    {
+    public void setModInstance(Object modInstance) {
         this.modInstance = modInstance;
     }
 
-    public void handleMessages(boolean server, boolean runtime)
-    {
-        for (FMLInterModComms.IMCMessage message : FMLInterModComms.fetchRuntimeMessages(modInstance))
-        {
+    public void handleMessages(boolean server, boolean runtime) {
+        for (FMLInterModComms.IMCMessage message : FMLInterModComms.fetchRuntimeMessages(modInstance)) {
             onIMCMessage(message, server, true);
         }
     }
 
-    public void onIMCMessage(FMLInterModComms.IMCMessage message, boolean server, boolean runtime)
-    {
-        try
-        {
+    public void onIMCMessage(FMLInterModComms.IMCMessage message, boolean server, boolean runtime) {
+        try {
             boolean didHandle = handleMessage(message, server, runtime);
 
-            if (!didHandle)
-            {
-                logger.warn("Could not handle message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'");
+            if (!didHandle) {
+                logger.warn(
+                    "Could not handle message with key '" + message.key
+                        + "' of type '"
+                        + message.getMessageType()
+                            .getName()
+                        + "'");
             }
-        }
-        catch (Exception ex)
-        {
-            logger.error("Exception on message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'");
+        } catch (Exception ex) {
+            logger.error(
+                "Exception on message with key '" + message.key
+                    + "' of type '"
+                    + message.getMessageType()
+                        .getName()
+                    + "'");
             ex.printStackTrace();
         }
     }
 
     protected abstract boolean handleMessage(FMLInterModComms.IMCMessage message, boolean server, boolean runtime);
 
-    protected boolean isMessage(String key, FMLInterModComms.IMCMessage message, Class expectedType)
-    {
-        if (key.equals(message.key))
-        {
-            if (message.getMessageType().isAssignableFrom(expectedType))
-            {
+    protected boolean isMessage(String key, FMLInterModComms.IMCMessage message, Class expectedType) {
+        if (key.equals(message.key)) {
+            if (message.getMessageType()
+                .isAssignableFrom(expectedType)) {
                 return true;
             }
 
@@ -113,27 +106,22 @@ public abstract class IvFMLIntercommHandler
         return false;
     }
 
-    protected Entity getEntity(NBTTagCompound compound, boolean server)
-    {
+    protected Entity getEntity(NBTTagCompound compound, boolean server) {
         return getEntity(compound, "worldID", "entityID", server);
     }
 
-    protected Entity getEntity(NBTTagCompound compound, String worldKey, String entityKey, boolean server)
-    {
-        if (!server)
-        {
+    protected Entity getEntity(NBTTagCompound compound, String worldKey, String entityKey, boolean server) {
+        if (!server) {
             return Minecraft.getMinecraft().theWorld.getEntityByID(compound.getInteger(entityKey));
-        }
-        else
-        {
-            return MinecraftServer.getServer().worldServerForDimension(compound.getInteger(worldKey)).getEntityByID(compound.getInteger(entityKey));
+        } else {
+            return MinecraftServer.getServer()
+                .worldServerForDimension(compound.getInteger(worldKey))
+                .getEntityByID(compound.getInteger(entityKey));
         }
     }
 
-    protected boolean sendReply(FMLInterModComms.IMCMessage message, String value)
-    {
-        if (message.getSender() == null)
-        {
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, String value) {
+        if (message.getSender() == null) {
             return false;
         }
 
@@ -142,10 +130,8 @@ public abstract class IvFMLIntercommHandler
         return true;
     }
 
-    protected boolean sendReply(FMLInterModComms.IMCMessage message, NBTTagCompound value)
-    {
-        if (message.getSender() == null)
-        {
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, NBTTagCompound value) {
+        if (message.getSender() == null) {
             return false;
         }
 
@@ -154,10 +140,8 @@ public abstract class IvFMLIntercommHandler
         return true;
     }
 
-    protected boolean sendReply(FMLInterModComms.IMCMessage message, ItemStack value)
-    {
-        if (message.getSender() == null)
-        {
+    protected boolean sendReply(FMLInterModComms.IMCMessage message, ItemStack value) {
+        if (message.getSender() == null) {
             logger.error("Message error! Could not reply to message with key '" + message.key + "' - No sender found");
             return false;
         }
@@ -167,9 +151,14 @@ public abstract class IvFMLIntercommHandler
         return true;
     }
 
-    private void faultyMessage(FMLInterModComms.IMCMessage message, Class expectedType)
-    {
-        logger.error("Got message with key '" + message.key + "' of type '" + message.getMessageType().getName() + "'; Expected type: '" + expectedType.getName() + "'");
+    private void faultyMessage(FMLInterModComms.IMCMessage message, Class expectedType) {
+        logger.error(
+            "Got message with key '" + message.key
+                + "' of type '"
+                + message.getMessageType()
+                    .getName()
+                + "'; Expected type: '"
+                + expectedType.getName()
+                + "'");
     }
 }
-

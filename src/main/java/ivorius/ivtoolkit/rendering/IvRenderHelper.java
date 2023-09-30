@@ -1,20 +1,19 @@
 /*
  * Copyright 2014 Lukas Tenbrink
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package ivorius.ivtoolkit.rendering;
+
+import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -22,19 +21,16 @@ import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
+
 import org.lwjgl.opengl.GL11;
 
-import java.util.Random;
+public class IvRenderHelper {
 
-public class IvRenderHelper
-{
-    public static void drawRectFullScreen(Minecraft mc)
-    {
+    public static void drawRectFullScreen(Minecraft mc) {
         drawRectFullScreen(mc.displayWidth, mc.displayHeight);
     }
 
-    public static void drawRectFullScreen(int screenWidth, int screenHeight)
-    {
+    public static void drawRectFullScreen(int screenWidth, int screenHeight) {
         Tessellator tessellator = Tessellator.instance;
 
         tessellator.startDrawingQuads();
@@ -45,8 +41,7 @@ public class IvRenderHelper
         tessellator.draw();
     }
 
-    public static void renderCubeInvBlock(RenderBlocks rb, Block block, int metadata)
-    {
+    public static void renderCubeInvBlock(RenderBlocks rb, Block block, int metadata) {
         block.setBlockBoundsForItemRender();
         Tessellator tessellator = Tessellator.instance;
 
@@ -83,8 +78,7 @@ public class IvRenderHelper
         GL11.glTranslatef(0.5F, 0.5F, 0.5F);
     }
 
-    public static void renderDefaultBlock(RenderBlocks rb, Block block, double x, double y, double z)
-    {
+    public static void renderDefaultBlock(RenderBlocks rb, Block block, double x, double y, double z) {
         block.setBlockBoundsForItemRender();
         rb.setRenderBoundsFromBlock(block);
         rb.renderFaceYNeg(block, x, y, z, rb.getBlockIconFromSide(block, 0));
@@ -95,8 +89,7 @@ public class IvRenderHelper
         rb.renderFaceXPos(block, x, y, z, rb.getBlockIconFromSide(block, 5));
     }
 
-    public static void renderLights(float ticks, int color, float alpha, int number)
-    {
+    public static void renderLights(float ticks, int color, float alpha, int number) {
         float width = 2.5f;
 
         Tessellator tessellator = Tessellator.instance;
@@ -113,11 +106,9 @@ public class IvRenderHelper
         GL11.glDepthMask(false);
         GL11.glPushMatrix();
 
-        for (int var7 = 0; (float) var7 < number; ++var7)
-        {
+        for (int var7 = 0; (float) var7 < number; ++var7) {
             float xLogFunc = (((float) var7 / number * 28493.0f + ticks) / 10.0f) % 20.0f;
-            if (xLogFunc > 10.0f)
-            {
+            if (xLogFunc > 10.0f) {
                 xLogFunc = 20.0f - xLogFunc;
             }
 
@@ -125,8 +116,7 @@ public class IvRenderHelper
 
             float lightAlpha = yLogFunc;
 
-            if (lightAlpha > 0.01f)
-            {
+            if (lightAlpha > 0.01f) {
                 GL11.glRotatef(random.nextFloat() * 360.0F, 1.0F, 0.0F, 0.0F);
                 GL11.glRotatef(random.nextFloat() * 360.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(random.nextFloat() * 360.0F, 0.0F, 0.0F, 1.0F);
@@ -157,16 +147,15 @@ public class IvRenderHelper
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
-    public static void renderParticle(Tessellator par1Tessellator, float time, float scale)
-    {
+    public static void renderParticle(Tessellator par1Tessellator, float time, float scale) {
         float f1 = ActiveRenderInfo.rotationX;
         float f2 = ActiveRenderInfo.rotationZ;
         float f3 = ActiveRenderInfo.rotationYZ;
         float f4 = ActiveRenderInfo.rotationXY;
         float f5 = ActiveRenderInfo.rotationXZ;
-//        double interpPosX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * (double)time;
-//        double interpPosY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * (double)time;
-//        double interpPosZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * (double)time;
+        // double interpPosX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * (double)time;
+        // double interpPosY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * (double)time;
+        // double interpPosZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * (double)time;
 
         float f6 = 0.0f;
         float f7 = 1.0f;
@@ -178,21 +167,37 @@ public class IvRenderHelper
         float f12 = 0.0f;
         float f13 = 0.0f;
         par1Tessellator.startDrawingQuads();
-        par1Tessellator.addVertexWithUV((double) (f11 - f1 * f10 - f3 * f10), (double) (f12 - f5 * f10), (double) (f13 - f2 * f10 - f4 * f10), (double) f7, (double) f9);
-        par1Tessellator.addVertexWithUV((double) (f11 - f1 * f10 + f3 * f10), (double) (f12 + f5 * f10), (double) (f13 - f2 * f10 + f4 * f10), (double) f7, (double) f8);
-        par1Tessellator.addVertexWithUV((double) (f11 + f1 * f10 + f3 * f10), (double) (f12 + f5 * f10), (double) (f13 + f2 * f10 + f4 * f10), (double) f6, (double) f8);
-        par1Tessellator.addVertexWithUV((double) (f11 + f1 * f10 - f3 * f10), (double) (f12 - f5 * f10), (double) (f13 + f2 * f10 - f4 * f10), (double) f6, (double) f9);
+        par1Tessellator.addVertexWithUV(
+            (double) (f11 - f1 * f10 - f3 * f10),
+            (double) (f12 - f5 * f10),
+            (double) (f13 - f2 * f10 - f4 * f10),
+            (double) f7,
+            (double) f9);
+        par1Tessellator.addVertexWithUV(
+            (double) (f11 - f1 * f10 + f3 * f10),
+            (double) (f12 + f5 * f10),
+            (double) (f13 - f2 * f10 + f4 * f10),
+            (double) f7,
+            (double) f8);
+        par1Tessellator.addVertexWithUV(
+            (double) (f11 + f1 * f10 + f3 * f10),
+            (double) (f12 + f5 * f10),
+            (double) (f13 + f2 * f10 + f4 * f10),
+            (double) f6,
+            (double) f8);
+        par1Tessellator.addVertexWithUV(
+            (double) (f11 + f1 * f10 - f3 * f10),
+            (double) (f12 - f5 * f10),
+            (double) (f13 + f2 * f10 - f4 * f10),
+            (double) f6,
+            (double) f9);
         par1Tessellator.draw();
     }
 
-    public static void drawNormalCube(Tessellator tessellator, float size, float in, boolean lined)
-    {
-        if (lined)
-        {
+    public static void drawNormalCube(Tessellator tessellator, float size, float in, boolean lined) {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
-        }
-        else
-        {
+        } else {
             tessellator.startDrawingQuads();
         }
 
@@ -200,65 +205,55 @@ public class IvRenderHelper
         tessellator.addVertex(size * in, -size * in, -size);
         tessellator.addVertex(size * in, size * in, -size);
         tessellator.addVertex(-size * in, size * in, -size);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-size * in, -size * in, size);
         tessellator.addVertex(-size * in, size * in, size);
         tessellator.addVertex(size * in, size * in, size);
         tessellator.addVertex(size * in, -size * in, size);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-size, -size * in, -size * in);
         tessellator.addVertex(-size, size * in, -size * in);
         tessellator.addVertex(-size, size * in, size * in);
         tessellator.addVertex(-size, -size * in, size * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(size, -size * in, -size * in);
         tessellator.addVertex(size, -size * in, size * in);
         tessellator.addVertex(size, size * in, size * in);
         tessellator.addVertex(size, size * in, -size * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-size * in, size, -size * in);
         tessellator.addVertex(size * in, size, -size * in);
         tessellator.addVertex(size * in, size, size * in);
         tessellator.addVertex(-size * in, size, size * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-size * in, -size, -size * in);
@@ -269,14 +264,11 @@ public class IvRenderHelper
         tessellator.draw();
     }
 
-    public static void drawCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in, boolean lined)
-    {
-        if (lined)
-        {
+    public static void drawCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in,
+        boolean lined) {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
-        }
-        else
-        {
+        } else {
             tessellator.startDrawingQuads();
         }
 
@@ -284,65 +276,55 @@ public class IvRenderHelper
         tessellator.addVertex(-sizeX * in, sizeY * in, -sizeZ);
         tessellator.addVertex(sizeX * in, sizeY * in, -sizeZ);
         tessellator.addVertex(sizeX * in, -sizeY * in, -sizeZ);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-sizeX * in, -sizeY * in, sizeZ);
         tessellator.addVertex(sizeX * in, -sizeY * in, sizeZ);
         tessellator.addVertex(sizeX * in, sizeY * in, sizeZ);
         tessellator.addVertex(-sizeX * in, sizeY * in, sizeZ);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-sizeX, -sizeY * in, -sizeZ * in);
         tessellator.addVertex(-sizeX, -sizeY * in, sizeZ * in);
         tessellator.addVertex(-sizeX, sizeY * in, sizeZ * in);
         tessellator.addVertex(-sizeX, sizeY * in, -sizeZ * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(sizeX, -sizeY * in, -sizeZ * in);
         tessellator.addVertex(sizeX, sizeY * in, -sizeZ * in);
         tessellator.addVertex(sizeX, sizeY * in, sizeZ * in);
         tessellator.addVertex(sizeX, -sizeY * in, sizeZ * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-sizeX * in, sizeY, -sizeZ * in);
         tessellator.addVertex(-sizeX * in, sizeY, sizeZ * in);
         tessellator.addVertex(sizeX * in, sizeY, sizeZ * in);
         tessellator.addVertex(sizeX * in, sizeY, -sizeZ * in);
-        if (lined)
-        {
+        if (lined) {
             tessellator.draw();
         }
 
-        if (lined)
-        {
+        if (lined) {
             tessellator.startDrawing(GL11.GL_LINE_STRIP);
         }
         tessellator.addVertex(-sizeX * in, -sizeY, -sizeZ * in);
@@ -353,8 +335,7 @@ public class IvRenderHelper
         tessellator.draw();
     }
 
-    public static void renderCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in)
-    {
+    public static void renderCuboid(Tessellator tessellator, float sizeX, float sizeY, float sizeZ, float in) {
         tessellator.addVertex(-sizeX * in, -sizeY * in, -sizeZ);
         tessellator.addVertex(-sizeX * in, sizeY * in, -sizeZ);
         tessellator.addVertex(sizeX * in, sizeY * in, -sizeZ);
@@ -386,8 +367,8 @@ public class IvRenderHelper
         tessellator.addVertex(-sizeX * in, -sizeY, sizeZ * in);
     }
 
-    public static void drawModelCuboid(Tessellator tessellator, float x, float y, float z, float sizeX, float sizeY, float sizeZ)
-    {
+    public static void drawModelCuboid(Tessellator tessellator, float x, float y, float z, float sizeX, float sizeY,
+        float sizeZ) {
         float tM = 1.0f / 16.0f;
 
         float transX = (x + sizeX * 0.5f) * tM;
