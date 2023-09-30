@@ -24,10 +24,4 @@ Fix crash when exporting large structures due to buffer overflow from recurrent 
 
 **New Optimizations:**
 
-Optimised block data packing algorithm
-The block data packing routine was rewritten to use a ByteBuffer instead of a direct byte array. This has the following benefits:
-The buffer size is correctly calculated based on the data length instead of using a fixed max size
-Data is written incrementally to the buffer to avoid out of memory issues
-No risk of buffer overflows thanks to ByteBuffer's automatic size management
-Packing result is retrieved into a final byte array once complete
-This resolves the ArrayIndexOutOfBounds exceptions occurring for very large block collections and improves the robustness and efficiency of the packing.
+Optimizing Block Data Compression Algorithm
