@@ -15,6 +15,8 @@ package ivorius.ivtoolkit.math;
 
 import net.minecraft.util.MathHelper;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by lukas on 13.07.14.
  */
@@ -30,8 +32,9 @@ public class IvBytePacker {
     }
 
     public static byte[] packValues(int[] values, byte bitLength) {
-        byte[] packed = new byte[MathHelper.ceiling_float_int(values.length * bitLength / 8.0f)];
-        int currentArrayIndex = 0;
+        int totalBytes = (int) Math.ceil(values.length * bitLength / 8.0);
+
+        ByteBuffer buffer = ByteBuffer.allocate(totalBytes);
 
         long currentVal = 0;
         byte currentSavedBits = 0;
@@ -41,15 +44,21 @@ public class IvBytePacker {
             currentSavedBits += bitLength;
 
             while (currentSavedBits >= 8) {
-                packed[currentArrayIndex] = (byte) (currentVal >>> (currentSavedBits - 8));
+                // Écrivez un byte complet dans le buffer
+                buffer.put((byte) (currentVal >>> (currentSavedBits - 8)));
                 currentSavedBits -= 8;
 
                 currentVal = deleteLeftBits(currentVal, 64 - currentSavedBits);
-                currentArrayIndex++;
             }
         }
 
-        if (currentSavedBits > 0) packed[currentArrayIndex] = (byte) (currentVal << (8 - currentSavedBits));
+        if (currentSavedBits > 0) {
+            buffer.put((byte) (currentVal << (8 - currentSavedBits)));
+        }
+
+        byte[] packed = new byte[totalBytes];
+        buffer.flip();
+        buffer.get(packed);
 
         return packed;
     }
@@ -62,7 +71,7 @@ public class IvBytePacker {
         byte currentSavedBits = 0;
 
         for (byte value : packed) {
-            currentVal = (currentVal << 8) | moveMSBToBytePos((long) value);
+            currentVal = (currentVal << 8) | moveMSBToBytePos(value);
             currentSavedBits += 8;
 
             while (currentSavedBits >= bitLength && currentArrayIndex < valueCount) {
