@@ -84,70 +84,75 @@ public class GridQuadCache<T> implements Iterable<GridQuadCache.CachedQuadLevel<
     }
 
     protected static <T> GridQuadCache<T> createQuadCacheGreedy(int[] size, float[] scale,
-        Function<Pair<BlockCoord, ForgeDirection>, T> mapper) {
-        Map<QuadContext<T>, CoordGrid> partialCache = new HashMap<>();
-
-        for (int x = 0; x < size[0]; x++) for (int y = 0; y < size[1]; y++) for (int z = 0; z < size[2]; z++) {
-            BlockCoord coord = new BlockCoord(x, y, z);
-            addToCache(partialCache, mapper, UP, coord);
-            addToCache(partialCache, mapper, DOWN, coord);
-            addToCache(partialCache, mapper, NORTH, coord);
-            addToCache(partialCache, mapper, EAST, coord);
-            addToCache(partialCache, mapper, SOUTH, coord);
-            addToCache(partialCache, mapper, WEST, coord);
-        }
-
-        Set<Map.Entry<QuadContext<T>, CoordGrid>> quads = partialCache.entrySet();
+                                                                Function<Pair<BlockCoord, ForgeDirection>, T> mapper) {
         GridQuadCache<T> cache = new GridQuadCache<>();
         cache.size = new float[3];
         for (int i = 0; i < 3; i++) cache.size[i] = size[i] * scale[i];
 
-        for (Map.Entry<QuadContext<T>, CoordGrid> entry : quads) {
-            QuadContext<T> context = entry.getKey();
+        for (int x = 0; x < size[0]; x++) {
+            for (int y = 0; y < size[1]; y++) {
+                for (int z = 0; z < size[2]; z++) {
+                    BlockCoord coord = new BlockCoord(x, y, z);
+                    for (ForgeDirection direction : ForgeDirection.VALID_DIRECTIONS) {
+                        T t = mapper.apply(Pair.of(coord, direction));
+                        if (t != null) {
+                            int[] sAxes = getCacheAxes(direction, size);
+                            float[] scAxes = getCacheAxes(direction, scale);
 
-            int[] sAxes = getCacheAxes(context.direction, size);
-            float[] scAxes = getCacheAxes(context.direction, scale);
+                            CoordGrid quad = new CoordGrid();
+                            addToCache(quad, mapper, direction, coord);
 
-            QuadCollection mesh = entry.getValue()
-                .computeMesh(0, 0, sAxes[1], sAxes[2]);
-            FloatBuffer cachedQuadCoords = BufferUtils.createFloatBuffer(mesh.quadCount() * 4);
+                            QuadCollection mesh = quad.computeMesh(0, 0, sAxes[1], sAxes[2]);
+                            FloatBuffer cachedQuadCoords = BufferUtils.createFloatBuffer(mesh.quadCount() * 4);
 
-            float pxAxis = scAxes[1];
-            float pzAxis = scAxes[2];
+                            float pxAxis = scAxes[1];
+                            float pzAxis = scAxes[2];
 
-            for (int i = 0; i < mesh.quadCount(); i++) {
-                cachedQuadCoords.put(mesh.x1(i) * pxAxis)
-                    .put(mesh.y1(i) * pzAxis)
-                    .put((mesh.x2(i) + 1) * pxAxis)
-                    .put((mesh.y2(i) + 1) * pzAxis);
+                            for (int i = 0; i < mesh.quadCount(); i++) {
+                                cachedQuadCoords.put(mesh.x1(i) * pxAxis)
+                                    .put(mesh.y1(i) * pzAxis)
+                                    .put((mesh.x2(i) + 1) * pxAxis)
+                                    .put((mesh.y2(i) + 1) * pzAxis);
+                            }
+                            cachedQuadCoords.position(0);
+
+                            float zLevel = (direction.offsetX + direction.offsetY + direction.offsetZ > 0
+                                ? coord.getY() + 1
+                                : coord.getY()) * scAxes[0];
+
+                            cache.cachedQuadLevels.add(new CachedQuadLevel<>(zLevel, direction, t, cachedQuadCoords));
+                        }
+                    }
+                }
             }
-            cachedQuadCoords.position(0);
-
-            float zLevel;
-            zLevel = (context.direction.offsetX + context.direction.offsetY + context.direction.offsetZ > 0
-                ? context.layer + 1
-                : context.layer) * scAxes[0];
-
-            cache.cachedQuadLevels.add(new CachedQuadLevel<>(zLevel, context.direction, context.t, cachedQuadCoords));
         }
 
         return cache;
     }
 
     protected static <T> void addToCache(Map<QuadContext<T>, CoordGrid> cache,
-        Function<Pair<BlockCoord, ForgeDirection>, T> mapper, ForgeDirection direction, BlockCoord coord) {
+                                         Function<Pair<BlockCoord, ForgeDirection>, T> mapper, ForgeDirection direction, BlockCoord coord) {
         T t = mapper.apply(Pair.of(coord, direction));
         if (t != null) {
             int[] sAxes = getCacheAxes(direction, coord.x, coord.y, coord.z);
-            addToCache(cache, new QuadContext<>(sAxes[0], direction, t), sAxes[1], sAxes[2]);
+            addToCacheInternal(cache, new QuadContext<>(sAxes[0], direction, t), sAxes[1], sAxes[2]);
         }
     }
 
-    protected static <T> void addToCache(Map<QuadContext<T>, CoordGrid> cache, QuadContext<T> context, int x, int y) {
+    protected static <T> void addToCacheInternal(Map<QuadContext<T>, CoordGrid> cache, QuadContext<T> context, int x, int y) {
         CoordGrid quad = cache.get(context);
         if (quad == null) cache.put(context, quad = new CoordGrid());
         quad.addCoord(x, y);
     }
+
+    protected static <T> void addToCache(CoordGrid grid, Function<Pair<BlockCoord, ForgeDirection>, T> mapper, ForgeDirection direction, BlockCoord coord) {
+        T t = mapper.apply(Pair.of(coord, direction));
+        if (t != null) {
+            int[] sAxes = getCacheAxes(direction, coord.x, coord.y, coord.z);
+            grid.addCoord(sAxes[1], sAxes[2]);
+        }
+    }
+
 
     public float[] getSize() {
         return size.clone();
