@@ -134,9 +134,10 @@ public class MazeComponentConnector {
                 throw new RuntimeException("Maze component selection not static.");
 
             ShiftedMazeComponent<M, C> placing = null;
-            while ((placing == null || !componentPredicate.test(placing)) && reversing.triedIndices < shuffled.size())
+            int maxTries = 100;
+            while ((placing == null || !componentPredicate.test(placing)) && reversing.triedIndices < shuffled.size() && reversing.triedIndices < maxTries)
                 placing = shuffled.get(reversing.triedIndices++);
-            if (reversing.triedIndices >= shuffled.size()) placing = null;
+            if (reversing.triedIndices >= shuffled.size() || reversing.triedIndices >= maxTries) placing = null;
 
             if (placing == null) {
                 if (reverses == 0) {
