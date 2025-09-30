@@ -25,11 +25,15 @@ import com.google.common.collect.Multimap;
  */
 public class SetMazeComponent<C> implements MorphingMazeComponent<C> {
 
-    public final Set<MazeRoom> rooms = new HashSet<>();
-    public final Map<MazePassage, C> exits = new HashMap<>();
-    public final Multimap<MazePassage, MazePassage> reachability = HashMultimap.create();
+    public final Set<MazeRoom> rooms;
+    public final Map<MazePassage, C> exits;
+    public final Multimap<MazePassage, MazePassage> reachability;
 
-    public SetMazeComponent() {}
+    public SetMazeComponent() {
+        this.rooms = new HashSet<>();
+        this.exits = new HashMap<>();
+        this.reachability = HashMultimap.create();
+    }
 
     @Deprecated
     public SetMazeComponent(Set<MazeRoom> rooms, Map<MazePassage, C> exits) {
@@ -62,6 +66,14 @@ public class SetMazeComponent<C> implements MorphingMazeComponent<C> {
 
     public SetMazeComponent(Set<MazeRoom> rooms, Map<MazePassage, C> exits,
         Multimap<MazePassage, MazePassage> reachability) {
+        // Initialize with optimized capacity to reduce rehashing
+        int roomsCapacity = Math.max(16, rooms.size() * 4 / 3 + 1);
+        int exitsCapacity = Math.max(16, exits.size() * 4 / 3 + 1);
+        
+        this.rooms = new HashSet<>(roomsCapacity);
+        this.exits = new HashMap<>(exitsCapacity);
+        this.reachability = HashMultimap.create();
+        
         this.rooms.addAll(rooms);
         this.exits.putAll(exits);
         this.reachability.putAll(reachability);
