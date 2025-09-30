@@ -25,3 +25,5 @@ Fix crash when exporting large structures due to buffer overflow from recurrent 
 **New Optimizations:**
 
 Optimizing Block Data Compression Algorithm
+
+Significantly improved Maze generation speed (removing bottlenecks and unoptimized algorythms)
