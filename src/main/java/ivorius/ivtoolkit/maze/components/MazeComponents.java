@@ -14,11 +14,10 @@
 package ivorius.ivtoolkit.maze.components;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
-import com.google.common.collect.Sets;
 
 import ivorius.ivtoolkit.tools.GuavaCollectors;
 
@@ -78,8 +77,27 @@ public class MazeComponents {
     }
 
     public static boolean overlap(MazeComponent<?> left, MazeComponent<?> right) {
-        return Sets.intersection(left.rooms(), right.rooms())
-            .size() > 0;
+        // Performance optimization: Instead of using Sets.intersection().size() > 0 which
+        // creates a lazy view and forces full iteration, we iterate through the smaller
+        // set and check containment in the larger set for early termination.
+        Set<MazeRoom> leftRooms = left.rooms();
+        Set<MazeRoom> rightRooms = right.rooms();
+        
+        // Iterate through the smaller set for better performance
+        if (leftRooms.size() <= rightRooms.size()) {
+            for (MazeRoom room : leftRooms) {
+                if (rightRooms.contains(room)) {
+                    return true; // Early termination on first overlap found
+                }
+            }
+        } else {
+            for (MazeRoom room : rightRooms) {
+                if (leftRooms.contains(room)) {
+                    return true; // Early termination on first overlap found
+                }
+            }
+        }
+        return false; // No overlap found
     }
 
     public static <C> boolean allExitsCompatible(final MazeComponent<C> existing, final MazeComponent<C> add,
