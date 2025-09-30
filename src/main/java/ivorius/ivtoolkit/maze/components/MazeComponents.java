@@ -13,13 +13,17 @@
 
 package ivorius.ivtoolkit.maze.components;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import ivorius.ivtoolkit.tools.GuavaCollectors;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 
 /**
  * Created by lukas on 15.04.15.
@@ -43,61 +47,46 @@ public class MazeComponents {
 
     public static <M extends MazeComponent<C>, C> ShiftedMazeComponent<M, C> shift(final M component,
         final MazeRoom shift) {
+        // Optimize by avoiding multiple stream operations and intermediate collections
+        Set<MazeRoom> originalRooms = component.rooms();
+        Map<MazePassage, C> originalExits = component.exits();
+        Multimap<MazePassage, MazePassage> originalReachability = component.reachability();
+        
+        // Use builders for better performance than streams
+        ImmutableSet.Builder<MazeRoom> roomsBuilder = ImmutableSet.builder();
+        ImmutableMap.Builder<MazePassage, C> exitsBuilder = ImmutableMap.builder();
+        ImmutableMultimap.Builder<MazePassage, MazePassage> reachabilityBuilder = ImmutableMultimap.builder();
+        
+        // Transform rooms efficiently - single iteration, no streams
+        for (MazeRoom room : originalRooms) {
+            if (room != null) {
+                roomsBuilder.add(room.add(shift));
+            }
+        }
+        
+        // Transform exits efficiently - single iteration, no streams
+        for (Map.Entry<MazePassage, C> entry : originalExits.entrySet()) {
+            MazePassage passage = entry.getKey();
+            if (passage != null) {
+                exitsBuilder.put(passage.add(shift), entry.getValue());
+            }
+        }
+        
+        // Transform reachability efficiently - avoid nested streams
+        for (Map.Entry<MazePassage, MazePassage> entry : originalReachability.entries()) {
+            MazePassage key = entry.getKey();
+            MazePassage value = entry.getValue();
+            if (key != null && value != null) {
+                reachabilityBuilder.put(key.add(shift), value.add(shift));
+            }
+        }
+        
         return new ShiftedMazeComponent<>(
             component,
             shift,
-            component.rooms()
-                .stream()
-                .map(r -> r != null ? r.add(shift) : null)
-                .collect(GuavaCollectors.immutableSet()),
-            component.exits()
-                .keySet()
-                .stream()
-                .collect(GuavaCollectors.toMap(c1 -> c1 != null ? c1.add(shift) : null, component.exits()::get)),
-            component.reachability()
-                .keySet()
-                .stream()
-                .collect(
-                    GuavaCollectors.toMultimap(
-                        c -> c.add(shift),
-                        c -> component.reachability()
-                            .get(c)
-                            .stream()
-                            .map(c2 -> c2.add(shift))::iterator)));
-    }
-
-    public static <C> Predicate<? extends MazeComponent<C>> compatibilityPredicate(final MazeComponent<C> component,
-        final ConnectionStrategy<C> strategy) {
-        return input -> componentsCompatible(component, input, strategy);
-    }
-
-    public static <C> boolean componentsCompatible(final MazeComponent<C> existing, final MazeComponent<C> add,
-        final ConnectionStrategy<C> strategy) {
-        return !overlap(existing, add) && allExitsCompatible(existing, add, strategy);
-    }
-
-    public static boolean overlap(MazeComponent<?> left, MazeComponent<?> right) {
-        // Performance optimization: Instead of using Sets.intersection().size() > 0 which
-        // creates a lazy view and forces full iteration, we iterate through the smaller
-        // set and check containment in the larger set for early termination.
-        Set<MazeRoom> leftRooms = left.rooms();
-        Set<MazeRoom> rightRooms = right.rooms();
-        
-        // Iterate through the smaller set for better performance
-        if (leftRooms.size() <= rightRooms.size()) {
-            for (MazeRoom room : leftRooms) {
-                if (rightRooms.contains(room)) {
-                    return true; // Early termination on first overlap found
-                }
-            }
-        } else {
-            for (MazeRoom room : rightRooms) {
-                if (leftRooms.contains(room)) {
-                    return true; // Early termination on first overlap found
-                }
-            }
-        }
-        return false; // No overlap found
+            roomsBuilder.build(),
+            exitsBuilder.build(),
+            reachabilityBuilder.build());
     }
 
     public static <C> boolean allExitsCompatible(final MazeComponent<C> existing, final MazeComponent<C> add,

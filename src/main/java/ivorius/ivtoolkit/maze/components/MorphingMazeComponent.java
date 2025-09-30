@@ -23,4 +23,25 @@ public interface MorphingMazeComponent<C> extends MazeComponent<C> {
     void set(MazeComponent<C> component);
 
     MorphingMazeComponent<C> copy();
+
+    /**
+     * Creates a snapshot that can be restored later using restoreFromSnapshot
+     */
+    MazeSnapshot<C> createSnapshot();
+
+    /**
+     * Efficiently restores the maze to a previous snapshot state
+     * without full copying by applying inverse operations
+     */
+    void restoreFromSnapshot(MazeSnapshot<C> snapshot);
+
+    /**
+     * Adds a component and returns a diff that can be used to undo the operation
+     */
+    MazeChangeDiff<C> addWithDiff(MazeComponent<C> component);
+
+    /**
+     * Applies the inverse of a diff to undo changes
+     */
+    void applyInverseDiff(MazeChangeDiff<C> diff);
 }

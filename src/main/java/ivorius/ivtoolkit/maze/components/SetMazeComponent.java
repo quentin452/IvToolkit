@@ -15,7 +15,6 @@ package ivorius.ivtoolkit.maze.components;
 
 import java.util.*;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
@@ -32,12 +31,12 @@ public class SetMazeComponent<C> implements MorphingMazeComponent<C> {
     public SetMazeComponent() {
         this.rooms = new HashSet<>();
         this.exits = new HashMap<>();
-        this.reachability = HashMultimap.create();
+        this.reachability = CompactReachabilityMap.create();
     }
 
     @Deprecated
     public SetMazeComponent(Set<MazeRoom> rooms, Map<MazePassage, C> exits) {
-        this(rooms, exits, HashMultimap.create());
+        this(rooms, exits, CompactReachabilityMap.create());
         connectAll(exits.keySet(), reachability);
     }
 
@@ -72,7 +71,7 @@ public class SetMazeComponent<C> implements MorphingMazeComponent<C> {
         
         this.rooms = new HashSet<>(roomsCapacity);
         this.exits = new HashMap<>(exitsCapacity);
-        this.reachability = HashMultimap.create();
+        this.reachability = CompactReachabilityMap.create();
         
         this.rooms.addAll(rooms);
         this.exits.putAll(exits);
@@ -123,5 +122,110 @@ public class SetMazeComponent<C> implements MorphingMazeComponent<C> {
     @Override
     public MorphingMazeComponent<C> copy() {
         return new SetMazeComponent<>(rooms, exits, reachability);
+    }
+
+    @Override
+    public MazeSnapshot<C> createSnapshot() {
+        // Create shallow copies for the snapshot
+        return new MazeSnapshot<>(
+            new HashSet<>(rooms),
+            new HashMap<>(exits),
+            CompactReachabilityMap.create(reachability)
+        );
+    }
+
+    @Override
+    public void restoreFromSnapshot(MazeSnapshot<C> snapshot) {
+        restoreFromSnapshotWithDiff(snapshot);
+    }
+
+    /**
+     * Restores from snapshot and returns the diff representing the restoration.
+     * This is useful for cache invalidation.
+     */
+    public MazeChangeDiff<C> restoreFromSnapshotWithDiff(MazeSnapshot<C> snapshot) {
+        List<MazeChangeDiff<C>> changes = snapshot.getChangesFromSnapshot();
+        
+        // Combine all changes into a single diff for cache invalidation
+        Set<MazeRoom> allAddedRooms = new HashSet<>();
+        Set<MazeRoom> allRemovedRooms = new HashSet<>();
+        Map<MazePassage, C> allAddedExits = new HashMap<>();
+        Map<MazePassage, C> allRemovedExits = new HashMap<>();
+        
+        // Apply all inverse changes in reverse order
+        for (int i = changes.size() - 1; i >= 0; i--) {
+            MazeChangeDiff<C> change = changes.get(i);
+            applyInverseDiff(change);
+            
+            // Track the inverse operations for cache invalidation
+            allRemovedRooms.addAll(change.addedRooms);
+            allAddedRooms.addAll(change.removedRooms);
+            allRemovedExits.putAll(change.addedExits);
+            allAddedExits.putAll(change.removedExits);
+        }
+        
+        changes.clear();
+        
+        return new MazeChangeDiff<>(allAddedRooms, allRemovedRooms, 
+                                   allAddedExits, allRemovedExits,
+                                   CompactReachabilityMap.create(), CompactReachabilityMap.create());
+    }
+
+    @Override
+    public MazeChangeDiff<C> addWithDiff(MazeComponent<C> component) {
+        Set<MazeRoom> addedRooms = new HashSet<>();
+        Map<MazePassage, C> addedExits = new HashMap<>();
+        Map<MazePassage, C> removedExits = new HashMap<>();
+        Multimap<MazePassage, MazePassage> addedReachability = CompactReachabilityMap.create();
+
+        // Track rooms that will be added
+        for (MazeRoom room : component.rooms()) {
+            if (!rooms.contains(room)) {
+                addedRooms.add(room);
+            }
+        }
+        rooms.addAll(component.rooms());
+
+        // Track exit changes (some may be removed due to connections)
+        for (Map.Entry<MazePassage, C> entry : component.exits().entrySet()) {
+            C existing = exits.remove(entry.getKey());
+            if (existing == null) {
+                addedExits.put(entry.getKey(), entry.getValue());
+                exits.put(entry.getKey(), entry.getValue());
+            } else {
+                removedExits.put(entry.getKey(), existing);
+            }
+        }
+
+        // Track reachability additions
+        for (Map.Entry<MazePassage, MazePassage> entry : component.reachability().entries()) {
+            if (!reachability.containsEntry(entry.getKey(), entry.getValue())) {
+                addedReachability.put(entry.getKey(), entry.getValue());
+            }
+        }
+        reachability.putAll(component.reachability());
+
+        return new MazeChangeDiff<>(
+            addedRooms, new HashSet<>(),
+            addedExits, removedExits,
+            addedReachability, CompactReachabilityMap.create()
+        );
+    }
+
+    @Override
+    public void applyInverseDiff(MazeChangeDiff<C> diff) {
+        // Remove added rooms
+        rooms.removeAll(diff.addedRooms);
+        
+        // Remove added exits and restore removed exits
+        for (MazePassage passage : diff.addedExits.keySet()) {
+            exits.remove(passage);
+        }
+        exits.putAll(diff.removedExits);
+        
+        // Remove added reachability
+        for (Map.Entry<MazePassage, MazePassage> entry : diff.addedReachability.entries()) {
+            reachability.remove(entry.getKey(), entry.getValue());
+        }
     }
 }
